@@ -27,7 +27,9 @@ router.get('/',
           b.business_name,
           b.business_type,
           b.city as business_city,
-          (SELECT COUNT(*) FROM applications WHERE shift_id = s.id AND status = 'accepted') as filled_positions
+          (SELECT COUNT(*) FROM applications WHERE shift_id = s.id AND status = 'accepted') as filled_positions,
+          (SELECT COUNT(*) FROM applications WHERE shift_id = s.id AND status = 'pending') as pending_applications,
+          (SELECT COUNT(*) FROM applications WHERE shift_id = s.id) as total_applications
         FROM shifts s
         JOIN businesses b ON s.business_id = b.id
         WHERE 1=1
@@ -75,7 +77,8 @@ router.get('/',
         paramCount++;
         query += ` AND s.status = $${paramCount}`;
         params.push(status);
-      } else {
+      } else if (!req.query.all) {
+        // Only show open shifts by default, unless 'all' parameter is provided
         query += ` AND s.status = 'open'`;
       }
 
@@ -298,6 +301,57 @@ router.put('/:id',
       res.json({ shift: result.rows[0] });
     } catch (error) {
       console.error('Update shift error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
+);
+
+// Delete shift (business only, or admin)
+router.delete('/:id',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Check if shift exists
+      const shiftResult = await pool.query(
+        `SELECT s.*, b.user_id as business_user_id 
+         FROM shifts s 
+         JOIN businesses b ON s.business_id = b.id 
+         WHERE s.id = $1`,
+        [id]
+      );
+
+      if (shiftResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Shift not found' });
+      }
+
+      const shift = shiftResult.rows[0];
+
+      // Check ownership or admin (for now, allow if business owner)
+      // In production, you'd check for admin role
+      if (req.user.user_type === 'business' && shift.business_user_id !== req.user.id) {
+        return res.status(403).json({ message: 'Unauthorized to delete this shift' });
+      }
+
+      // Check if shift has accepted applications
+      const appResult = await pool.query(
+        'SELECT COUNT(*) as count FROM applications WHERE shift_id = $1 AND status = $2',
+        [id, 'accepted']
+      );
+
+      if (parseInt(appResult.rows[0].count) > 0) {
+        return res.status(400).json({ 
+          message: 'Cannot delete shift with accepted applications. Cancel it instead.' 
+        });
+      }
+
+      // Delete shift (cascade will handle related records)
+      await pool.query('DELETE FROM shifts WHERE id = $1', [id]);
+
+      res.json({ message: 'Shift deleted successfully' });
+    } catch (error) {
+      console.error('Delete shift error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   }

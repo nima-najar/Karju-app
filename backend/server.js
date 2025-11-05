@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -8,6 +9,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Karju API Server',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      shifts: '/api/shifts',
+      applications: '/api/applications',
+      dashboard: '/api/dashboard',
+      profile: '/api/profile',
+      ratings: '/api/ratings',
+      notifications: '/api/notifications'
+    },
+    admin: {
+      webInterface: '/admin',
+      api: '/api/admin'
+    }
+  });
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -18,9 +42,36 @@ app.use('/api/ratings', require('./routes/ratings'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/notifications', require('./routes/notifications'));
 
+// Admin routes (developer-only database viewer)
+app.use('/api/admin', require('./routes/admin'));
+
+// Serve admin HTML page
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Karju API is running' });
+});
+
+// 404 handler for undefined routes
+app.use((req, res) => {
+  res.status(404).json({
+    message: 'Route not found',
+    path: req.path,
+    method: req.method,
+    availableEndpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      shifts: '/api/shifts',
+      applications: '/api/applications',
+      dashboard: '/api/dashboard',
+      profile: '/api/profile',
+      ratings: '/api/ratings',
+      notifications: '/api/notifications'
+    }
+  });
 });
 
 // Error handling middleware

@@ -44,6 +44,7 @@ export const shiftsAPI = {
   getById: (id: string) => api.get(`/shifts/${id}`),
   create: (data: any) => api.post('/shifts', data),
   update: (id: string, data: any) => api.put(`/shifts/${id}`, data),
+  delete: (id: string) => api.delete(`/shifts/${id}`),
 };
 
 // Applications API

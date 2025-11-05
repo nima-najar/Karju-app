@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { shiftsAPI, applicationsAPI } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatPersianDate, formatPersianCurrency, formatPersianNumber } from '@/lib/persianUtils';
 import { format } from 'date-fns';
-import { MapPin, Clock, DollarSign, Briefcase, Star } from 'lucide-react';
+import { MapPin, Clock, Coins, Briefcase, Star } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 
 export default function ShiftDetailPage() {
+  const { t, language } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const [shift, setShift] = useState<any>(null);
@@ -45,10 +48,10 @@ export default function ShiftDetailPage() {
         shiftId: shift.id,
         applicationText,
       });
-      alert('Application submitted successfully!');
+      alert(t('shifts.applicationSubmitted'));
       loadShift(); // Reload to show application status
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to submit application');
+      alert(error.response?.data?.message || t('shifts.applicationFailed'));
     } finally {
       setApplying(false);
     }
@@ -58,6 +61,7 @@ export default function ShiftDetailPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <p className="mt-4 text-gray-600">{t('common.loading')}</p>
       </div>
     );
   }
@@ -65,7 +69,7 @@ export default function ShiftDetailPage() {
   if (!shift) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <p className="text-gray-600 text-lg">Shift not found</p>
+        <p className="text-gray-600 text-lg">{t('shifts.shiftNotFound')}</p>
       </div>
     );
   }
@@ -78,35 +82,45 @@ export default function ShiftDetailPage() {
         <h1 className="text-3xl font-bold mb-4">{shift.title}</h1>
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="flex items-center">
-            <MapPin className="w-5 h-5 mr-2 text-primary-600" />
+            <MapPin className="w-5 h-5 mr-2 rtl:mr-0 rtl:ml-2 text-primary-600" />
             <div>
               <p className="font-medium">{shift.location}</p>
               <p className="text-sm text-gray-600">{shift.city}, {shift.province}</p>
             </div>
           </div>
           <div className="flex items-center">
-            <Clock className="w-5 h-5 mr-2 text-primary-600" />
+            <Clock className="w-5 h-5 mr-2 rtl:mr-0 rtl:ml-2 text-primary-600" />
             <div>
               <p className="font-medium">
-                {format(new Date(shift.shift_date), 'EEEE, MMMM dd, yyyy')}
+                {language === 'fa' 
+                  ? formatPersianDate(new Date(shift.shift_date), 'EEEE, MMMM dd, yyyy')
+                  : format(new Date(shift.shift_date), 'EEEE, MMMM dd, yyyy')}
               </p>
               <p className="text-sm text-gray-600">{shift.start_time} - {shift.end_time}</p>
             </div>
           </div>
           <div className="flex items-center">
-            <DollarSign className="w-5 h-5 mr-2 text-primary-600" />
+            <Coins className="w-5 h-5 mr-2 rtl:mr-0 rtl:ml-2 text-primary-600" />
             <div>
-              <p className="font-medium">{shift.hourly_wage?.toLocaleString()} IRR/hour</p>
-              <p className="text-sm text-gray-600">Platform fee: 200,000 IRR/hour</p>
+              <p className="font-medium">
+                {language === 'fa' 
+                  ? formatPersianCurrency(shift.hourly_wage || 0) + '/ساعت'
+                  : `${shift.hourly_wage?.toLocaleString()} IRR/hour`}
+              </p>
+              <p className="text-sm text-gray-600">
+                {language === 'fa' 
+                  ? `${t('shifts.platformFee')}: ${formatPersianCurrency(200000)} /ساعت`
+                  : `${t('shifts.platformFee')}: 200,000 ${t('shifts.perHour')}`}
+              </p>
             </div>
           </div>
           <div className="flex items-center">
-            <Briefcase className="w-5 h-5 mr-2 text-primary-600" />
+            <Briefcase className="w-5 h-5 mr-2 rtl:mr-0 rtl:ml-2 text-primary-600" />
             <div>
               <p className="font-medium">{shift.business_name}</p>
               {shift.business_rating && (
                 <p className="text-sm text-gray-600 flex items-center">
-                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                  <Star className="w-4 h-4 text-yellow-400 mr-1 rtl:mr-0 rtl:ml-1" />
                   {parseFloat(shift.business_rating).toFixed(1)}
                 </p>
               )}
@@ -115,13 +129,13 @@ export default function ShiftDetailPage() {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Description</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('shifts.description')}</h2>
           <p className="text-gray-700 whitespace-pre-line">{shift.description}</p>
         </div>
 
         {shift.required_skills && shift.required_skills.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Required Skills</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('shifts.requiredSkills')}</h2>
             <div className="flex flex-wrap gap-2">
               {shift.required_skills.map((skill: string, idx: number) => (
                 <span
@@ -137,32 +151,32 @@ export default function ShiftDetailPage() {
 
         {shift.dress_code && (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Dress Code</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('shifts.dressCode')}</h2>
             <p className="text-gray-700">{shift.dress_code}</p>
           </div>
         )}
 
         <div className="border-t pt-4">
           <p className="text-sm text-gray-600">
-            Cancellation deadline: {shift.cancellation_deadline_hours} hours before shift start
+            {t('shifts.cancellationDeadline')}: {language === 'fa' ? formatPersianNumber(shift.cancellation_deadline_hours) : shift.cancellation_deadline_hours} {t('shifts.hoursBeforeShift')}
           </p>
           <p className="text-sm text-gray-600">
-            Positions available: {shift.filled_positions || 0} / {shift.number_of_positions}
+            {t('shifts.positionsAvailable')}: {language === 'fa' ? formatPersianNumber(shift.filled_positions || 0) : (shift.filled_positions || 0)} / {language === 'fa' ? formatPersianNumber(shift.number_of_positions) : shift.number_of_positions}
           </p>
         </div>
       </div>
 
       {canApply && (
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Apply for this Shift</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('shifts.applyForShift')}</h2>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Application Message (optional)
+              {t('shifts.applicationMessage')}
             </label>
             <textarea
-              className="input-field"
+              className="input-field bg-white text-gray-900"
               rows={4}
-              placeholder="Tell the business why you're a good fit for this shift..."
+              placeholder={t('shifts.applicationPlaceholder')}
               value={applicationText}
               onChange={(e) => setApplicationText(e.target.value)}
             />
@@ -172,14 +186,14 @@ export default function ShiftDetailPage() {
             disabled={applying}
             className="btn-primary"
           >
-            {applying ? 'Submitting...' : 'Submit Application'}
+            {applying ? t('shifts.submitting') : t('shifts.submitApplication')}
           </button>
         </div>
       )}
 
       {shift.userApplication && (
         <div className="card">
-          <h2 className="text-xl font-semibold mb-2">Your Application Status</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('shifts.yourApplicationStatus')}</h2>
           <p className={`font-medium ${
             shift.userApplication.status === 'accepted' 
               ? 'text-green-600'
@@ -187,7 +201,11 @@ export default function ShiftDetailPage() {
               ? 'text-yellow-600'
               : 'text-red-600'
           }`}>
-            {shift.userApplication.status.charAt(0).toUpperCase() + shift.userApplication.status.slice(1)}
+            {shift.userApplication.status === 'accepted' 
+              ? t('shifts.accepted')
+              : shift.userApplication.status === 'pending'
+              ? t('shifts.pending')
+              : shift.userApplication.status.charAt(0).toUpperCase() + shift.userApplication.status.slice(1)}
           </p>
           {shift.userApplication.application_text && (
             <p className="mt-2 text-gray-600">{shift.userApplication.application_text}</p>

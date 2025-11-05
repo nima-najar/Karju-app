@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS worker_profiles (
     hourly_rate_max INTEGER,
     preferred_locations TEXT[],
     availability_calendar JSONB, -- Stores availability for upcoming month
+    profile_picture_url TEXT, -- Stores base64 image or image URL
     average_rating DECIMAL(3,2) DEFAULT 0.00,
     total_ratings INTEGER DEFAULT 0,
     total_earnings DECIMAL(12,2) DEFAULT 0.00,

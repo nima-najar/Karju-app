@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Briefcase, Users, Clock, Shield } from 'lucide-react';
 
 export default function Home() {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -11,17 +14,17 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl font-bold mb-6">
-              Karju - Shift-based Work Marketplace
+              {t('home.title')}
             </h1>
             <p className="text-xl mb-8 max-w-2xl mx-auto">
-              The first Iranian online marketplace connecting businesses with skilled workers for flexible shift opportunities.
+              {t('home.subtitle')}
             </p>
-            <div className="flex justify-center space-x-4">
+            <div className="flex justify-center space-x-4 rtl:space-x-reverse">
               <Link href="/register" className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                Get Started
+                {t('home.getStarted')}
               </Link>
               <Link href="/shifts" className="bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-600 transition-colors border border-white">
-                Browse Shifts
+                {t('home.browseShifts')}
               </Link>
             </div>
           </div>
@@ -31,37 +34,37 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Karju?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">{t('home.whyChoose')}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="card text-center">
               <Briefcase className="w-12 h-12 text-primary-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Flexible Work</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('home.flexibleWork')}</h3>
               <p className="text-gray-600">
-                Choose shifts that fit your schedule. Work when you want, where you want.
+                {t('home.flexibleWorkDesc')}
               </p>
             </div>
 
             <div className="card text-center">
               <Users className="w-12 h-12 text-primary-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Verified Workers</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('home.verifiedWorkers')}</h3>
               <p className="text-gray-600">
-                All workers are verified through our 3-step verification process.
+                {t('home.verifiedWorkersDesc')}
               </p>
             </div>
 
             <div className="card text-center">
               <Clock className="w-12 h-12 text-primary-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Quick Matching</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('home.quickMatching')}</h3>
               <p className="text-gray-600">
-                Find qualified workers instantly or get matched to perfect shifts.
+                {t('home.quickMatchingDesc')}
               </p>
             </div>
 
             <div className="card text-center">
               <Shield className="w-12 h-12 text-primary-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Secure Payments</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('home.securePayments')}</h3>
               <p className="text-gray-600">
-                Transparent pricing with secure payment processing through Iranian gateways.
+                {t('home.securePaymentsDesc')}
               </p>
             </div>
           </div>
@@ -71,57 +74,57 @@ export default function Home() {
       {/* How It Works Section */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">{t('home.howItWorks')}</h2>
           <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <h3 className="text-2xl font-semibold mb-6">For Workers</h3>
+              <h3 className="text-2xl font-semibold mb-6">{t('home.forWorkers')}</h3>
               <ol className="space-y-4">
                 <li className="flex items-start">
-                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">1</span>
+                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 rtl:mr-0 rtl:ml-4 flex-shrink-0">1</span>
                   <div>
-                    <h4 className="font-semibold">Sign Up & Verify</h4>
-                    <p className="text-gray-600">Complete our simple 3-step verification (ID, CV, work permit)</p>
+                    <h4 className="font-semibold">{t('home.signUpVerify')}</h4>
+                    <p className="text-gray-600">{t('home.signUpVerifyDesc')}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">2</span>
+                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 rtl:mr-0 rtl:ml-4 flex-shrink-0">2</span>
                   <div>
-                    <h4 className="font-semibold">Browse & Apply</h4>
-                    <p className="text-gray-600">Explore available shifts and apply to the ones that match your skills</p>
+                    <h4 className="font-semibold">{t('home.browseApply')}</h4>
+                    <p className="text-gray-600">{t('home.browseApplyDesc')}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">3</span>
+                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 rtl:mr-0 rtl:ml-4 flex-shrink-0">3</span>
                   <div>
-                    <h4 className="font-semibold">Work & Earn</h4>
-                    <p className="text-gray-600">Complete shifts and get paid monthly through secure payment processing</p>
+                    <h4 className="font-semibold">{t('home.workEarn')}</h4>
+                    <p className="text-gray-600">{t('home.workEarnDesc')}</p>
                   </div>
                 </li>
               </ol>
             </div>
 
             <div>
-              <h3 className="text-2xl font-semibold mb-6">For Businesses</h3>
+              <h3 className="text-2xl font-semibold mb-6">{t('home.forBusinesses')}</h3>
               <ol className="space-y-4">
                 <li className="flex items-start">
-                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">1</span>
+                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 rtl:mr-0 rtl:ml-4 flex-shrink-0">1</span>
                   <div>
-                    <h4 className="font-semibold">Register & Verify</h4>
-                    <p className="text-gray-600">Sign up your business and complete verification</p>
+                    <h4 className="font-semibold">{t('home.registerVerify')}</h4>
+                    <p className="text-gray-600">{t('home.registerVerifyDesc')}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">2</span>
+                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 rtl:mr-0 rtl:ml-4 flex-shrink-0">2</span>
                   <div>
-                    <h4 className="font-semibold">Post Shifts</h4>
-                    <p className="text-gray-600">Create shift posts with details, requirements, and pay rate</p>
+                    <h4 className="font-semibold">{t('home.postShifts')}</h4>
+                    <p className="text-gray-600">{t('home.postShiftsDesc')}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">3</span>
+                  <span className="bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 rtl:mr-0 rtl:ml-4 flex-shrink-0">3</span>
                   <div>
-                    <h4 className="font-semibold">Review & Hire</h4>
-                    <p className="text-gray-600">Review applications, select workers, and manage your workforce</p>
+                    <h4 className="font-semibold">{t('home.reviewHire')}</h4>
+                    <p className="text-gray-600">{t('home.reviewHireDesc')}</p>
                   </div>
                 </li>
               </ol>
@@ -133,15 +136,15 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 bg-primary-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-bold mb-6">{t('home.readyToStart')}</h2>
           <p className="text-xl mb-8">
-            Join thousands of workers and businesses already using Karju
+            {t('home.readyToStartDesc')}
           </p>
           <Link
             href="/register"
             className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block"
           >
-            Create Your Account
+            {t('home.createAccount')}
           </Link>
         </div>
       </section>

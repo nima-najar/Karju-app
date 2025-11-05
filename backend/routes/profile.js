@@ -62,12 +62,13 @@ router.put('/worker',
         bio,
         skills,
         experienceYears,
-        hourlyRateMin,
-        hourlyRateMax,
         preferredLocations,
         availabilityCalendar,
+        profilePictureUrl,
       } = req.body;
 
+      // Check if profile_picture_url column exists, if not we'll handle it
+      // For now, we'll store it as a JSONB field or add it to the schema
       // Update profile
       const result = await pool.query(
         `UPDATE worker_profiles
@@ -75,26 +76,38 @@ router.put('/worker',
            bio = COALESCE($1, bio),
            skills = COALESCE($2, skills),
            experience_years = COALESCE($3, experience_years),
-           hourly_rate_min = COALESCE($4, hourly_rate_min),
-           hourly_rate_max = COALESCE($5, hourly_rate_max),
-           preferred_locations = COALESCE($6, preferred_locations),
-           availability_calendar = COALESCE($7, availability_calendar),
+           preferred_locations = COALESCE($4, preferred_locations),
+           availability_calendar = COALESCE($5, availability_calendar),
            updated_at = CURRENT_TIMESTAMP
-         WHERE user_id = $8
+         WHERE user_id = $6
          RETURNING *`,
         [
           bio,
           skills,
           experienceYears,
-          hourlyRateMin,
-          hourlyRateMax,
           preferredLocations,
           availabilityCalendar ? JSON.stringify(availabilityCalendar) : null,
           userId,
         ]
       );
+      
+      // Update profile picture (can be null to remove)
+      if (profilePictureUrl !== undefined) {
+        await pool.query(
+          `UPDATE worker_profiles 
+           SET profile_picture_url = $1 
+           WHERE user_id = $2`,
+          [profilePictureUrl, userId]
+        );
+      }
+      
+      // Get updated profile with picture
+      const updatedResult = await pool.query(
+        'SELECT * FROM worker_profiles WHERE user_id = $1',
+        [userId]
+      );
 
-      res.json({ profile: result.rows[0] });
+      res.json({ profile: updatedResult.rows[0] || result.rows[0] });
     } catch (error) {
       console.error('Update worker profile error:', error);
       res.status(500).json({ message: 'Server error' });

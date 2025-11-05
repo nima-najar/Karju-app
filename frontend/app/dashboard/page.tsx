@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { dashboardAPI } from '@/lib/api';
 import { getUser } from '@/lib/auth';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatPersianDate, formatPersianCurrency, formatPersianNumber } from '@/lib/persianUtils';
 import { format } from 'date-fns';
-import { Briefcase, Clock, DollarSign, Calendar } from 'lucide-react';
+import { Briefcase, Clock, Coins, Calendar } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -46,39 +49,45 @@ export default function DashboardPage() {
   if (user?.userType === 'worker') {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold mb-8">Worker Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('dashboard.workerDashboard')}</h1>
 
         {/* Income Stats */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="card">
             <div className="flex items-center">
-              <DollarSign className="w-8 h-8 text-primary-600 mr-4" />
+              <Coins className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
               <div>
-                <p className="text-sm text-gray-600">Total Earnings</p>
+                <p className="text-sm text-gray-600">{t('profile.totalEarnings')}</p>
                 <p className="text-2xl font-bold">
-                  {parseInt(dashboardData.incomeStats?.total_earnings || 0).toLocaleString()} IRR
+                  {language === 'fa' 
+                    ? formatPersianCurrency(parseInt(dashboardData.incomeStats?.total_earnings || 0))
+                    : `${parseInt(dashboardData.incomeStats?.total_earnings || 0).toLocaleString()} IRR`}
                 </p>
               </div>
             </div>
           </div>
           <div className="card">
             <div className="flex items-center">
-              <Briefcase className="w-8 h-8 text-primary-600 mr-4" />
+              <Briefcase className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
               <div>
-                <p className="text-sm text-gray-600">Shifts Completed</p>
+                <p className="text-sm text-gray-600">{t('dashboard.shiftsCompleted')}</p>
                 <p className="text-2xl font-bold">
-                  {dashboardData.incomeStats?.total_shifts_completed || 0}
+                  {language === 'fa' 
+                    ? formatPersianNumber(dashboardData.incomeStats?.total_shifts_completed || 0)
+                    : dashboardData.incomeStats?.total_shifts_completed || 0}
                 </p>
               </div>
             </div>
           </div>
           <div className="card">
             <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-primary-600 mr-4" />
+              <Calendar className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
               <div>
-                <p className="text-sm text-gray-600">Upcoming Shifts</p>
+                <p className="text-sm text-gray-600">{t('profile.upcomingShifts')}</p>
                 <p className="text-2xl font-bold">
-                  {dashboardData.upcomingShifts?.length || 0}
+                  {language === 'fa' 
+                    ? formatPersianNumber(dashboardData.upcomingShifts?.length || 0)
+                    : dashboardData.upcomingShifts?.length || 0}
                 </p>
               </div>
             </div>
@@ -87,16 +96,18 @@ export default function DashboardPage() {
 
         {/* Upcoming Shifts */}
         <div className="card mb-8">
-          <h2 className="text-xl font-semibold mb-4">Upcoming Shifts</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('profile.upcomingShifts')}</h2>
           {dashboardData.upcomingShifts?.length === 0 ? (
-            <p className="text-gray-600">No upcoming shifts</p>
+            <p className="text-gray-600">{t('profile.noUpcomingShifts')}</p>
           ) : (
             <div className="space-y-4">
               {dashboardData.upcomingShifts?.map((shift: any) => (
-                <div key={shift.id} className="border-l-4 border-primary-600 pl-4 py-2">
+                <div key={shift.id} className="border-l-4 border-primary-600 rtl:border-l-0 rtl:border-r-4 pl-4 rtl:pl-0 rtl:pr-4 py-2">
                   <h3 className="font-semibold">{shift.title}</h3>
                   <p className="text-sm text-gray-600">
-                    {format(new Date(shift.shift_date), 'MMM dd, yyyy')} • {shift.start_time} - {shift.end_time}
+                    {language === 'fa' 
+                      ? formatPersianDate(new Date(shift.shift_date), 'yyyy/mm/dd')
+                      : format(new Date(shift.shift_date), 'MMM dd, yyyy')} • {shift.start_time} - {shift.end_time}
                   </p>
                   <p className="text-sm text-gray-600">{shift.business_name} • {shift.location}</p>
                 </div>
@@ -107,16 +118,18 @@ export default function DashboardPage() {
 
         {/* Pending Applications */}
         <div className="card mb-8">
-          <h2 className="text-xl font-semibold mb-4">Pending Applications</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('profile.pendingApplications')}</h2>
           {dashboardData.pendingApplications?.length === 0 ? (
-            <p className="text-gray-600">No pending applications</p>
+            <p className="text-gray-600">{t('profile.noPendingApplications')}</p>
           ) : (
             <div className="space-y-4">
               {dashboardData.pendingApplications?.map((app: any) => (
-                <div key={app.id} className="border-l-4 border-yellow-500 pl-4 py-2">
+                <div key={app.id} className="border-l-4 border-yellow-500 rtl:border-l-0 rtl:border-r-4 pl-4 rtl:pl-0 rtl:pr-4 py-2">
                   <h3 className="font-semibold">{app.title}</h3>
                   <p className="text-sm text-gray-600">
-                    {format(new Date(app.shift_date), 'MMM dd, yyyy')} • {app.business_name}
+                    {language === 'fa' 
+                      ? formatPersianDate(new Date(app.shift_date), 'yyyy/mm/dd')
+                      : format(new Date(app.shift_date), 'MMM dd, yyyy')} • {app.business_name}
                   </p>
                 </div>
               ))}
