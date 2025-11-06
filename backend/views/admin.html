@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karju Admin - Database Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: #e5e7eb;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            background: #d1d5db;
+        }
+        
+        .tab.active {
+            background: #0ea5e9;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0ea5e9;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            min-height: 400px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        
+        table th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        table tr:hover {
+            background: #f9fafb;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge.open { background: #d1fae5; color: #065f46; }
+        .badge.filled { background: #dbeafe; color: #1e40af; }
+        .badge.completed { background: #e5e7eb; color: #374151; }
+        .badge.cancelled { background: #fee2e2; color: #991b1b; }
+        .badge.pending { background: #fef3c7; color: #92400e; }
+        .badge.accepted { background: #d1fae5; color: #065f46; }
+        .badge.rejected { background: #fee2e2; color: #991b1b; }
+        .badge.worker { background: #dbeafe; color: #1e40af; }
+        .badge.business { background: #fce7f3; color: #9f1239; }
+        
+        .json-view {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .json-view pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .refresh-btn {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        
+        .refresh-btn:hover {
+            background: #0284c7;
+        }
+        
+        .count {
+            display: inline-block;
+            background: #0ea5e9;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Karju Database Admin Viewer</h1>
+        <p>Developer-only interface to view all database data</p>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="loadTab('stats')">📊 Statistics</button>
+            <button class="tab" onclick="loadTab('users')">👥 Users <span class="count" id="users-count">-</span></button>
+            <button class="tab" onclick="loadTab('businesses')">🏢 Businesses <span class="count" id="businesses-count">-</span></button>
+            <button class="tab" onclick="loadTab('workers')">👷 Workers <span class="count" id="workers-count">-</span></button>
+            <button class="tab" onclick="loadTab('shifts')">📅 Shifts <span class="count" id="shifts-count">-</span></button>
+            <button class="tab" onclick="loadTab('applications')">📝 Applications <span class="count" id="applications-count">-</span></button>
+            <button class="tab" onclick="loadTab('assignments')">✅ Assignments <span class="count" id="assignments-count">-</span></button>
+            <button class="tab" onclick="loadTab('ratings')">⭐ Ratings <span class="count" id="ratings-count">-</span></button>
+            <button class="tab" onclick="loadTab('notifications')">🔔 Notifications <span class="count" id="notifications-count">-</span></button>
+        </div>
+        
+        <div class="content" id="content">
+            <div class="loading">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin + '/api/admin';
+        let currentTab = 'stats';
+        
+        async function loadTab(tabName) {
+            currentTab = tabName;
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading...</div>';
+            
+            try {
+                let data;
+                let endpoint = '';
+                
+                switch(tabName) {
+                    case 'stats':
+                        endpoint = '/stats';
+                        break;
+                    case 'users':
+                        endpoint = '/users';
+                        break;
+                    case 'businesses':
+                        endpoint = '/businesses';
+                        break;
+                    case 'workers':
+                        endpoint = '/workers';
+                        break;
+                    case 'shifts':
+                        endpoint = '/shifts';
+                        break;
+                    case 'applications':
+                        endpoint = '/applications';
+                        break;
+                    case 'assignments':
+                        endpoint = '/assignments';
+                        break;
+                    case 'ratings':
+                        endpoint = '/ratings';
+                        break;
+                    case 'notifications':
+                        endpoint = '/notifications';
+                        break;
+                }
+                
+                const response = await fetch(API_URL + endpoint);
+                data = await response.json();
+                
+                if (tabName === 'stats') {
+                    renderStats(data);
+                } else {
+                    renderTable(tabName, data);
+                    // Update count badge
+                    const countEl = document.getElementById(tabName + '-count');
+                    if (countEl && data.count !== undefined) {
+                        countEl.textContent = data.count;
+                    }
+                }
+            } catch (error) {
+                content.innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+            }
+        }
+        
+        function renderStats(stats) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <button class="refresh-btn" onclick="loadTab('stats')">🔄 Refresh</button>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <div class="value">${stats.total_users || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Workers</h3>
+                        <div class="value">${stats.workers || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Businesses</h3>
+                        <div class="value">${stats.businesses || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Shifts</h3>
+                        <div class="value">${stats.total_shifts || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Open Shifts</h3>
+                        <div class="value">${stats.open_shifts || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Filled Shifts</h3>
+                        <div class="value">${stats.filled_shifts || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Completed Shifts</h3>
+                        <div class="value">${stats.completed_shifts || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Applications</h3>
+                        <div class="value">${stats.total_applications || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Applications</h3>
+                        <div class="value">${stats.pending_applications || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Accepted Applications</h3>
+                        <div class="value">${stats.accepted_applications || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Assignments</h3>
+                        <div class="value">${stats.total_assignments || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Ratings</h3>
+                        <div class="value">${stats.total_ratings || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Notifications</h3>
+                        <div class="value">${stats.total_notifications || 0}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderTable(tabName, data) {
+            const content = document.getElementById('content');
+            const items = data[Object.keys(data).find(k => k !== 'count')] || [];
+            
+            if (items.length === 0) {
+                content.innerHTML = '<div class="loading">No data found</div>';
+                return;
+            }
+            
+            const keys = Object.keys(items[0]);
+            
+            let tableHTML = `
+                <button class="refresh-btn" onclick="loadTab('${tabName}')">🔄 Refresh</button>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                ${keys.map(key => `<th>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            items.forEach(item => {
+                tableHTML += '<tr>';
+                keys.forEach(key => {
+                    let value = item[key];
+                    if (value === null || value === undefined) {
+                        value = '<em style="color: #9ca3af;">null</em>';
+                    } else if (typeof value === 'object') {
+                        value = `<div class="json-view"><pre>${JSON.stringify(value, null, 2)}</pre></div>`;
+                    } else if (typeof value === 'boolean') {
+                        value = value ? '✓' : '✗';
+                    } else if (key.includes('date') || key.includes('created_at') || key.includes('updated_at')) {
+                        value = new Date(value).toLocaleString();
+                    } else if (key === 'status') {
+                        value = `<span class="badge ${value}">${value}</span>`;
+                    } else if (key === 'user_type') {
+                        value = `<span class="badge ${value}">${value}</span>`;
+                    } else if (key.includes('email')) {
+                        value = `<a href="mailto:${value}" style="color: #0ea5e9;">${value}</a>`;
+                    } else if (typeof value === 'string' && value.length > 100) {
+                        value = `<span title="${value}">${value.substring(0, 100)}...</span>`;
+                    }
+                    tableHTML += `<td>${value}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">
+                    Showing ${items.length} ${tabName}
+                </div>
+            `;
+            
+            content.innerHTML = tableHTML;
+        }
+        
+        // Load stats on page load
+        window.onload = () => loadTab('stats');
+    </script>
+</body>
+</html>
+
