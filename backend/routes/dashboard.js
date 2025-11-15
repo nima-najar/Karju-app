@@ -32,6 +32,7 @@ router.get('/worker', authenticate, async (req, res) => {
     const pendingApplications = await pool.query(
       `SELECT 
         a.*,
+        s.id as shift_id,
         s.title,
         s.description,
         s.shift_date,
@@ -95,12 +96,21 @@ router.get('/worker', authenticate, async (req, res) => {
       [userId]
     );
 
+    // Get worker profile for average rating
+    const profileResult = await pool.query(
+      `SELECT average_rating, total_ratings
+       FROM worker_profiles
+       WHERE user_id = $1`,
+      [userId]
+    );
+
     res.json({
       upcomingShifts: upcomingShifts.rows,
       pendingApplications: pendingApplications.rows,
       completedShifts: completedShifts.rows,
       incomeStats: incomeStats.rows[0],
       monthlyIncome: monthlyIncome.rows,
+      profile: profileResult.rows[0] || { average_rating: null, total_ratings: 0 },
     });
   } catch (error) {
     console.error('Worker dashboard error:', error);

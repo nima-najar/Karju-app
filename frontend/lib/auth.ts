@@ -22,6 +22,8 @@ export const getUser = () => {
 export const setUser = (user: any) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('user', JSON.stringify(user));
+    // Dispatch custom event to notify Navbar
+    window.dispatchEvent(new Event('user-login'));
   }
 };
 
@@ -29,6 +31,8 @@ export const logout = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Dispatch custom event to notify Navbar
+    window.dispatchEvent(new Event('user-logout'));
     window.location.href = '/login';
   }
 };

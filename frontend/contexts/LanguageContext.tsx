@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { translations } from '@/lib/translations';
 
 type Language = 'en' | 'fa';
 
@@ -13,58 +14,82 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
-
-  useEffect(() => {
-    // Load language from localStorage
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'fa')) {
-      setLanguageState(savedLanguage);
+  const [language, setLanguageState] = useState<Language>(() => {
+    // Initialize from localStorage on first render
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('language') as Language;
+      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'fa')) {
+        return savedLanguage;
+      }
     }
-  }, []);
+    return 'fa';
+  });
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('language', lang);
-    // Update HTML dir attribute for RTL support
-    if (lang === 'fa') {
-      document.documentElement.setAttribute('dir', 'rtl');
-      document.documentElement.setAttribute('lang', 'fa');
-    } else {
-      document.documentElement.setAttribute('dir', 'ltr');
-      document.documentElement.setAttribute('lang', 'en');
-    }
-  };
-
-  // Initialize direction on mount
+  // Initialize direction on mount and when language changes
   useEffect(() => {
-    if (language === 'fa') {
-      document.documentElement.setAttribute('dir', 'rtl');
-      document.documentElement.setAttribute('lang', 'fa');
-    } else {
-      document.documentElement.setAttribute('dir', 'ltr');
-      document.documentElement.setAttribute('lang', 'en');
+    if (typeof document !== 'undefined') {
+      if (language === 'fa') {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.setAttribute('lang', 'fa');
+      } else {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.setAttribute('lang', 'en');
+      }
     }
   }, [language]);
 
-  const t = (key: string): string => {
-    const keys = key.split('.');
-    const translations = require('@/lib/translations').translations[language];
-    let value: any = translations;
-    
-    for (const k of keys) {
-      value = value?.[k];
-      if (value === undefined) {
-        console.warn(`Translation missing for key: ${key}`);
-        return key;
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const storedTheme = window.localStorage.getItem('karju-theme');
+    if (storedTheme === 'dark' || storedTheme === 'light') {
+      document.documentElement.setAttribute('data-karju-theme', storedTheme);
+      document.documentElement.style.setProperty('color-scheme', storedTheme);
+    }
+  }, [language]);
+
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+      // Update HTML dir attribute for RTL support
+      if (typeof document !== 'undefined') {
+        if (lang === 'fa') {
+          document.documentElement.setAttribute('dir', 'rtl');
+          document.documentElement.setAttribute('lang', 'fa');
+        } else {
+          document.documentElement.setAttribute('dir', 'ltr');
+          document.documentElement.setAttribute('lang', 'en');
+        }
       }
     }
-    
-    return value || key;
-  };
+  }, []);
+
+  const t = useMemo(() => {
+    return (key: string): string => {
+      const keys = key.split('.');
+      const translationObj = translations[language];
+      let value: any = translationObj;
+      
+      for (const k of keys) {
+        value = value?.[k];
+        if (value === undefined) {
+          console.warn(`Translation missing for key: ${key}`);
+          return key;
+        }
+      }
+      
+      return value || key;
+    };
+  }, [language]);
+
+  const value = useMemo(() => ({
+    language,
+    setLanguage,
+    t,
+  }), [language, setLanguage, t]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

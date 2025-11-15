@@ -1,27 +1,230 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { profileAPI, dashboardAPI, ratingsAPI } from '@/lib/api';
-import { getUser } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import {
+  profileAPI,
+  dashboardAPI,
+} from '@/lib/api';
+import { getUser, logout } from '@/lib/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatPersianDate, formatPersianCurrency, formatPersianNumber } from '@/lib/persianUtils';
+import {
+  formatPersianCurrency,
+  formatPersianDate,
+  gregorianToJalali,
+  jalaliToGregorian,
+  toPersianNum,
+} from '@/lib/persianUtils';
 import { format } from 'date-fns';
-import { 
-  User, Edit, Briefcase, Clock, Coins, Calendar, 
-  MapPin, Star, Award, TrendingUp, CheckCircle, XCircle
+import {
+  ArrowRight,
+  Award,
+  Clock,
+  Coins,
+  Edit,
+  Settings,
+  User,
+  X,
 } from 'lucide-react';
+
+type AvailabilityMap = Record<string, { start: string; end: string }>;
+
+const timeOptions = Array.from({ length: 24 * 2 }, (_, index) => {
+  const totalMinutes = index * 30;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${minutes
+    .toString()
+    .padStart(2, '0')}`;
+});
+
+const formatDurationHours = (start: string, end: string): number => {
+  const [startH, startM] = start.split(':').map(Number);
+  const [endH, endM] = end.split(':').map(Number);
+  let diff = endH * 60 + endM - (startH * 60 + startM);
+  if (diff <= 0) {
+    diff += 24 * 60;
+  }
+  return diff / 60;
+};
+
+const getTehranCurrentDate = () => {
+  const nowUtc = new Date();
+
+  // Convert UTC milliseconds to Tehran timezone by adding offset (UTC+3:30 or UTC+4:30 in daylight).
+  const tehranOffsetHours = 3.5;
+  const tehranMilliseconds =
+    nowUtc.getTime() + tehranOffsetHours * 60 * 60 * 1000;
+
+  const tehranDate = new Date(tehranMilliseconds);
+  const year = tehranDate.getUTCFullYear();
+  const month = tehranDate.getUTCMonth() + 1;
+  const day = tehranDate.getUTCDate();
+
+  return { year, month, day };
+};
+
+const jalaliMonthNamesFa = [
+  'فروردین',
+  'اردیبهشت',
+  'خرداد',
+  'تیر',
+  'مرداد',
+  'شهریور',
+  'مهر',
+  'آبان',
+  'آذر',
+  'دی',
+  'بهمن',
+  'اسفند',
+];
+
+const jalaliMonthNamesEn = [
+  'Farvardin',
+  'Ordibehesht',
+  'Khordad',
+  'Tir',
+  'Mordad',
+  'Shahrivar',
+  'Mehr',
+  'Aban',
+  'Azar',
+  'Dey',
+  'Bahman',
+  'Esfand',
+];
+
+const jalaliWeekdaysFa = ['جمعه', 'پنج', 'چهار', 'سه', 'دو', 'یک', 'شنبه'];
+const jalaliWeekdaysEn = ['Fri', 'Thu', 'Wed', 'Tue', 'Mon', 'Sun', 'Sat'];
+const weekOrderByGregorianDay = [5, 4, 3, 2, 1, 0, 6];
+
+type CalendarDay = {
+  date: Date;
+  jalaliYear: number;
+  jalaliMonth: number;
+  jalaliDay: number;
+  isCurrentMonth: boolean;
+};
+
+const buildCalendarDays = (jalaliYear: number, jalaliMonth: number): CalendarDay[] => {
+  const [gy, gm, gd] = jalaliToGregorian(jalaliYear, jalaliMonth, 1);
+  const firstDay = new Date(gy, gm - 1, gd);
+  const calendarStart = new Date(firstDay);
+
+  while (weekOrderByGregorianDay[0] !== calendarStart.getDay()) {
+    calendarStart.setDate(calendarStart.getDate() - 1);
+  }
+
+  const days: CalendarDay[] = [];
+  for (let i = 0; i < 35; i += 1) {
+    const current = new Date(calendarStart);
+    current.setDate(calendarStart.getDate() + i);
+    const [jy, jm, jd] = gregorianToJalali(
+      current.getFullYear(),
+      current.getMonth() + 1,
+      current.getDate(),
+    );
+
+    days.push({
+      date: current,
+      jalaliYear: jy,
+      jalaliMonth: jm,
+      jalaliDay: jd,
+      isCurrentMonth: jy === jalaliYear && jm === jalaliMonth,
+    });
+  }
+
+  return days;
+};
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { language } = useLanguage();
+
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [profileData, setProfileData] = useState<any>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
-  const [ratings, setRatings] = useState<any[]>([]);
-  const { t, language } = useLanguage();
+  const [availabilityMap, setAvailabilityMap] = useState<AvailabilityMap>({});
+  const [availabilityModal, setAvailabilityModal] = useState<{
+    day: CalendarDay;
+    start: string;
+    end: string;
+  } | null>(null);
+
+  const getAvailabilityKey = (day: CalendarDay) =>
+    `${day.jalaliYear}-${day.jalaliMonth}-${day.jalaliDay}`;
+
+  const openAvailabilityModal = (day: CalendarDay) => {
+    const key = getAvailabilityKey(day);
+    const existing = availabilityMap[key];
+    setAvailabilityModal({
+      day,
+      start: existing?.start ?? '09:00',
+      end: existing?.end ?? '17:00',
+    });
+  };
+
+  const closeAvailabilityModal = () => setAvailabilityModal(null);
+
+  const persistAvailability = async (nextMap: AvailabilityMap) => {
+    if (!user || user.userType !== 'worker') {
+      return;
+    }
+
+    await profileAPI.updateWorkerProfile({
+      availabilityCalendar: nextMap,
+    });
+  };
+
+  const saveAvailability = async () => {
+    if (!availabilityModal) return;
+    const key = getAvailabilityKey(availabilityModal.day);
+    const previousMap = { ...availabilityMap };
+    const nextMap: AvailabilityMap = {
+      ...availabilityMap,
+      [key]: { start: availabilityModal.start, end: availabilityModal.end },
+    };
+
+    setAvailabilityMap(nextMap);
+
+    try {
+      await persistAvailability(nextMap);
+      closeAvailabilityModal();
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      alert(
+        language === 'fa'
+          ? 'ذخیره موجودیت با مشکل مواجه شد. لطفاً دوباره تلاش کنید.'
+          : 'Failed to save availability. Please try again.',
+      );
+      setAvailabilityMap({ ...previousMap });
+    }
+  };
+
+  const markUnavailable = async () => {
+    if (!availabilityModal) return;
+    const key = getAvailabilityKey(availabilityModal.day);
+    const previousMap = { ...availabilityMap };
+    const nextMap: AvailabilityMap = { ...availabilityMap };
+    delete nextMap[key];
+
+    setAvailabilityMap(nextMap);
+
+    try {
+      await persistAvailability(nextMap);
+      closeAvailabilityModal();
+    } catch (error) {
+      console.error('Error removing availability:', error);
+      alert(
+        language === 'fa'
+          ? 'حذف موجودیت با مشکل مواجه شد. لطفاً دوباره تلاش کنید.'
+          : 'Failed to remove availability. Please try again.',
+      );
+      setAvailabilityMap({ ...previousMap });
+    }
+  };
 
   useEffect(() => {
     const currentUser = getUser();
@@ -29,488 +232,703 @@ export default function ProfilePage() {
       router.push('/login');
       return;
     }
+
     setUser(currentUser);
-    loadAllData(currentUser);
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        if (currentUser.userType === 'worker') {
+          const profileResponse = await profileAPI.getWorkerProfile(currentUser.id);
+          setProfileData(profileResponse.data);
+
+          const availabilityData =
+            profileResponse.data?.profile?.availability_calendar;
+
+          if (availabilityData) {
+            try {
+              setAvailabilityMap(
+                typeof availabilityData === 'string'
+                  ? JSON.parse(availabilityData)
+                  : availabilityData,
+              );
+            } catch (parseError) {
+              console.error('Failed to parse availability calendar:', parseError);
+              setAvailabilityMap({});
+            }
+          } else {
+            setAvailabilityMap({});
+          }
+
+          const dashboardResponse = await dashboardAPI.getWorkerDashboard();
+          setDashboardData(dashboardResponse.data);
+        } else {
+          const dashboardResponse = await dashboardAPI.getBusinessDashboard();
+          setDashboardData(dashboardResponse.data);
+        }
+      } catch (error) {
+        console.error('Error loading profile page data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadAllData = async (currentUser: any) => {
-    try {
-      setLoading(true);
-      
-      // Load profile
-      if (currentUser.userType === 'worker') {
-        const profileResponse = await profileAPI.getWorkerProfile(currentUser.id);
-        setProfileData(profileResponse.data);
-        
-        // Load dashboard data
-        const dashboardResponse = await dashboardAPI.getWorkerDashboard();
-        setDashboardData(dashboardResponse.data);
-        
-        // Load ratings
-        const ratingsResponse = await ratingsAPI.getByUser(currentUser.id);
-        setRatings(ratingsResponse.data.ratings || []);
-      } else {
-        const dashboardResponse = await dashboardAPI.getBusinessDashboard();
-        setDashboardData(dashboardResponse.data);
-      }
-    } catch (error) {
-      console.error('Error loading profile data:', error);
-    } finally {
-      setLoading(false);
+  const todayJalali = useMemo(() => {
+    const tehranDate = getTehranCurrentDate();
+    const [jy, jm, jd] = gregorianToJalali(
+      tehranDate.year,
+      tehranDate.month,
+      tehranDate.day,
+    );
+    return { jy, jm, jd };
+  }, []);
+
+  const [calendarState, setCalendarState] = useState(() => ({
+    year: todayJalali.jy,
+    month: todayJalali.jm,
+  }));
+
+  const calendarDays = useMemo(
+    () => buildCalendarDays(calendarState.year, calendarState.month),
+    [calendarState.year, calendarState.month],
+  );
+
+  const highlightedDates = useMemo(() => {
+    const set = new Set<string>();
+
+    if (dashboardData?.upcomingShifts) {
+      dashboardData.upcomingShifts.forEach((shift: any) => {
+        const date = new Date(shift.shift_date);
+        const [jy, jm, jd] = gregorianToJalali(
+          date.getFullYear(),
+          date.getMonth() + 1,
+          date.getDate(),
+        );
+        set.add(`${jy}-${jm}-${jd}`);
+      });
     }
+
+    Object.keys(availabilityMap).forEach((key) => set.add(key));
+
+    return set;
+  }, [availabilityMap, dashboardData?.upcomingShifts]);
+
+  const monthNames = language === 'fa' ? jalaliMonthNamesFa : jalaliMonthNamesEn;
+  const weekdayNames = language === 'fa' ? jalaliWeekdaysFa : jalaliWeekdaysEn;
+
+  const formatNumber = (value: number | string) =>
+    language === 'fa' ? toPersianNum(value) : value.toString();
+
+  const getDurationLabel = (value: number) => {
+    const display = Number.isInteger(value) ? value.toString() : value.toFixed(1);
+    if (language === 'fa') {
+      return `${toPersianNum(display)} ساعت`;
+    }
+    return `${display} ${value === 1 ? 'hour' : 'hours'}`;
+  };
+
+  const handleNextMonth = () =>
+    setCalendarState((prev) => {
+      if (prev.month === 12) {
+        return { month: 1, year: prev.year + 1 };
+      }
+      return { ...prev, month: prev.month + 1 };
+    });
+
+  const handlePreviousMonth = () =>
+    setCalendarState((prev) => {
+      if (prev.month === 1) {
+        return { month: 12, year: prev.year - 1 };
+      }
+      return { ...prev, month: prev.month - 1 };
+    });
+
+  const handleResetToToday = () => {
+    const tehranDate = getTehranCurrentDate();
+    const [jy, jm] = gregorianToJalali(
+      tehranDate.year,
+      tehranDate.month,
+      tehranDate.day,
+    );
+    setCalendarState({
+      year: jy,
+      month: jm,
+    });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-          <p className="text-white mt-4">{t('common.loading')}</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+          <p className="text-primary-700 mt-4">
+            {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  if (user?.userType === 'worker') {
-    const profile = profileData?.profile || {};
-    const completedShifts = dashboardData?.completedShifts || [];
-    const upcomingShifts = dashboardData?.upcomingShifts || [];
-    const pendingApplications = dashboardData?.pendingApplications || [];
-    const incomeStats = dashboardData?.incomeStats || {};
+  if (!user) {
+    return null;
+  }
 
+  const profile = profileData?.profile || {};
+  const incomeStats = dashboardData?.incomeStats || {};
+  const attendanceRate =
+    profile.attendance_rate ??
+    incomeStats.attendance_rate ??
+    dashboardData?.workerStats?.attendance_rate ??
+    null;
+  const averageRating =
+    profile.average_rating ??
+    dashboardData?.workerStats?.rating ??
+    0;
+  const completedShifts =
+    incomeStats.total_shifts_completed ??
+    dashboardData?.completedShifts?.length ??
+    0;
+
+  const totalEarnings = Number(incomeStats.total_earnings || 0);
+  const monthEarnings =
+    incomeStats.current_month_earnings ??
+    incomeStats.currentMonth ??
+    0;
+
+  const phone =
+    profile.phone_number ||
+    profile.mobile_number ||
+    profile.phone ||
+    user.phone ||
+    (language === 'fa' ? 'ثبت نشده' : 'Not provided');
+  const memberSince =
+    profile.created_at ||
+    profileData?.created_at ||
+    user.createdAt ||
+    new Date().toISOString();
+  const memberSinceDate = new Date(memberSince);
+  const [memberSinceJy, memberSinceJm, memberSinceJd] = gregorianToJalali(
+    memberSinceDate.getFullYear(),
+    memberSinceDate.getMonth() + 1,
+    memberSinceDate.getDate(),
+  );
+
+  const settingsItems = [
+    {
+      label: language === 'fa' ? 'گواهی من' : 'My Certificates',
+      helper: language === 'fa' ? 'مدارک و فایل‌ها' : 'Documents & files',
+      icon: Award,
+      href: '/profile/certificates',
+    },
+    {
+      label: language === 'fa' ? 'امور مالی من' : 'My Finances',
+      helper: language === 'fa' ? 'پرداخت‌ها و درآمد' : 'Payments & earnings',
+      icon: Coins,
+      href: '/profile/finances',
+    },
+    {
+      label: language === 'fa' ? 'ترجیحات' : 'Preferences',
+      helper: language === 'fa' ? 'اعلان‌ها، ظاهر و حریم خصوصی' : 'Notifications, appearance, privacy',
+      icon: Settings,
+      href: '/profile/preferences',
+    },
+    {
+      label: language === 'fa' ? 'اطلاعات شخصی' : 'Personal Info',
+      helper: language === 'fa' ? 'مشاهده و ویرایش اطلاعات فردی' : 'View & edit personal details',
+      icon: User,
+      href: '/profile/personal-info',
+    },
+  ];
+
+  const statsCards = [
+    {
+      value: language === 'fa'
+        ? toPersianNum(completedShifts)
+        : completedShifts.toLocaleString(),
+      label: language === 'fa' ? 'شیفت‌های انجام شده' : 'Completed Shifts',
+    },
+    {
+      value: language === 'fa'
+        ? toPersianNum(Number(averageRating).toFixed(1))
+        : Number(averageRating).toFixed(1),
+      label: language === 'fa' ? 'میانگین امتیاز' : 'Average Rating',
+    },
+    {
+      value:
+        attendanceRate === null
+          ? (language === 'fa' ? '۰٪' : '0%')
+          : language === 'fa'
+          ? `${toPersianNum(Math.round(attendanceRate <= 1 ? attendanceRate * 100 : attendanceRate))}%`
+          : `${Math.round(attendanceRate <= 1 ? attendanceRate * 100 : attendanceRate)}%`,
+      label: language === 'fa' ? 'نرخ حضور' : 'Attendance Rate',
+    },
+  ];
+
+  const calendarRows: CalendarDay[][] = [];
+  for (let i = 0; i < calendarDays.length; i += 7) {
+    calendarRows.push(calendarDays.slice(i, i + 7));
+  }
+
+  if (user.userType !== 'worker') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Profile Header */}
-          <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <div className="relative">
-                {profile.profile_picture_url ? (
-                  <img
-                    src={profile.profile_picture_url}
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-primary-200"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-primary-200">
-                    <User className="w-16 h-16 text-gray-400" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {user.firstName} {user.lastName}
-                </h1>
-                <p className="text-gray-600 mb-4">{user.email}</p>
-                {profile.average_rating > 0 && (
-                  <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                    <span className="text-lg font-semibold">
-                      {parseFloat(profile.average_rating).toFixed(1)}
-                    </span>
-                    <span className="text-gray-600">
-                      ({profile.total_ratings || 0} reviews)
-                    </span>
-                  </div>
-                )}
-                {profile.bio && (
-                  <p className="text-gray-700 mb-4">{profile.bio}</p>
-                )}
-                {profile.skills && profile.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-4">
-                    {profile.skills.map((skill: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <Link
-                  href="/profile/edit"
-                  className="inline-flex items-center gap-2 btn-primary"
-                >
-                  <Edit className="w-5 h-5" />
-                  {t('profile.editProfile')}
-                </Link>
-              </div>
+      <div
+        className="min-h-screen bg-[#f9f9f9]"
+        dir={language === 'fa' ? 'rtl' : 'ltr'}
+      >
+        <div className="max-w-3xl mx-auto px-8 py-16 space-y-6">
+          <div className="bg-white rounded-[30px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-10 text-center">
+            <h1 className="text-2xl font-bold text-neutral-900 mb-3">
+              {language === 'fa' ? 'پروفایل کسب‌وکار' : 'Business Profile'}
+            </h1>
+            <p className="text-neutral-600">
+              {language === 'fa'
+                ? 'نمای کامل پروفایل کسب‌وکار به‌زودی در دسترس قرار می‌گیرد. برای ویرایش اطلاعات از گزینه زیر استفاده کنید.'
+                : 'A dedicated business profile experience is coming soon. Use the button below to manage your information.'}
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 mt-8">
+              <Link
+                href="/profile/edit"
+                className="inline-flex items-center gap-2 rounded-[10px] bg-primary-600 px-5 py-3 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
+              >
+                <Edit className="w-4 h-4" />
+                {language === 'fa' ? 'ویرایش پروفایل' : 'Edit Profile'}
+              </Link>
+              <Link
+                href="/admin/shifts"
+                className="inline-flex items-center gap-2 rounded-[10px] border border-primary-200 px-5 py-3 text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors"
+              >
+                <Coins className="w-4 h-4" />
+                {language === 'fa' ? 'مدیریت شیفت‌ها' : 'Manage Shifts'}
+              </Link>
             </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="bg-white rounded-lg shadow-xl mb-6">
-            <div className="flex border-b border-gray-200">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                  activeTab === 'dashboard'
-                    ? 'text-primary-600 border-b-2 border-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                {t('profile.dashboard')}
-              </button>
-              <button
-                onClick={() => setActiveTab('jobs')}
-                className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                  activeTab === 'jobs'
-                    ? 'text-primary-600 border-b-2 border-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                {t('profile.jobsHistory')}
-              </button>
-              <button
-                onClick={() => setActiveTab('reviews')}
-                className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                  activeTab === 'reviews'
-                    ? 'text-primary-600 border-b-2 border-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                {t('profile.reviews')}
-              </button>
-              <button
-                onClick={() => setActiveTab('info')}
-                className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                  activeTab === 'info'
-                    ? 'text-primary-600 border-b-2 border-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                {t('profile.profileInfo')}
-              </button>
-            </div>
-          </div>
-
-          {/* Tab Content */}
-          <div className="bg-white rounded-lg shadow-xl p-6">
-            {activeTab === 'dashboard' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">{t('profile.dashboard')}</h2>
-                
-                {/* Stats Cards */}
-                <div className="grid md:grid-cols-4 gap-6 mb-8">
-                  <div className="card">
-                    <div className="flex items-center">
-                      <Coins className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.totalEarnings')}</p>
-                        <p className="text-2xl font-bold">
-                          {language === 'fa' 
-                            ? formatPersianCurrency(parseInt(incomeStats.total_earnings || 0))
-                            : `${parseInt(incomeStats.total_earnings || 0).toLocaleString()} IRR`}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="card">
-                    <div className="flex items-center">
-                      <Briefcase className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.completedJobs')}</p>
-                        <p className="text-2xl font-bold">
-                          {incomeStats.total_shifts_completed || 0}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="card">
-                    <div className="flex items-center">
-                      <Calendar className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.upcomingShifts')}</p>
-                        <p className="text-2xl font-bold">
-                          {upcomingShifts.length}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="card">
-                    <div className="flex items-center">
-                      <Clock className="w-8 h-8 text-primary-600 mr-4 rtl:mr-0 rtl:ml-4" />
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.pendingApplications')}</p>
-                        <p className="text-2xl font-bold">
-                          {pendingApplications.length}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Upcoming Shifts */}
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">{t('profile.upcomingShifts')}</h3>
-                  {upcomingShifts.length === 0 ? (
-                    <p className="text-gray-600">{t('profile.noUpcomingShifts')}</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {upcomingShifts.map((shift: any) => (
-                        <div key={shift.id} className="card border-l-4 border-primary-600 rtl:border-l-0 rtl:border-r-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-semibold text-lg">{shift.title}</h4>
-                              <div className="mt-2 space-y-1 text-sm text-gray-600">
-                                <p className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4" />
-                                  {language === 'fa' 
-                                    ? formatPersianDate(new Date(shift.shift_date), 'yyyy/mm/dd')
-                                    : format(new Date(shift.shift_date), 'MMM dd, yyyy')} • {shift.start_time} - {shift.end_time}
-                                </p>
-                                <p className="flex items-center gap-2">
-                                  <MapPin className="w-4 h-4" />
-                                  {shift.location}, {shift.city}
-                                </p>
-                                <p className="flex items-center gap-2">
-                                  <Briefcase className="w-4 h-4" />
-                                  {shift.business_name}
-                                </p>
-                                <p className="flex items-center gap-2">
-                                  <Coins className="w-4 h-4" />
-                                  {language === 'fa' 
-                                    ? formatPersianCurrency(parseInt(shift.hourly_wage || 0)) + '/ساعت'
-                                    : `${parseInt(shift.hourly_wage)?.toLocaleString()} IRR/hour`}
-                                </p>
-                              </div>
-                            </div>
-                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                              {t('profile.confirmed')}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Pending Applications */}
-                <div>
-                  <h3 className="text-xl font-semibold mb-4">{t('profile.pendingApplications')}</h3>
-                  {pendingApplications.length === 0 ? (
-                    <p className="text-gray-600">{t('profile.noPendingApplications')}</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {pendingApplications.map((app: any) => (
-                        <div key={app.id} className="card border-l-4 border-yellow-500 rtl:border-l-0 rtl:border-r-4">
-                          <h4 className="font-semibold">{app.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {language === 'fa' 
-                              ? formatPersianDate(new Date(app.shift_date), 'yyyy/mm/dd')
-                              : format(new Date(app.shift_date), 'MMM dd, yyyy')} • {app.business_name}
-                          </p>
-                          <span className="inline-block mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                            {t('profile.pendingReview')}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'jobs' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">{t('profile.jobsHistory')}</h2>
-                {completedShifts.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg">{t('profile.noCompletedJobs')}</p>
-                    <Link href="/shifts" className="text-primary-600 hover:text-primary-700 mt-2 inline-block">
-                      {t('profile.browseShifts')}
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {completedShifts.map((shift: any) => (
-                      <div key={shift.id} className="card border-l-4 border-green-500 rtl:border-l-0 rtl:border-r-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-lg mb-2">{shift.title}</h4>
-                            <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-                              <div>
-                                <p className="flex items-center gap-2 mb-1">
-                                  <Briefcase className="w-4 h-4" />
-                                  <span className="font-medium">{shift.business_name}</span>
-                                </p>
-                                <p className="flex items-center gap-2 mb-1">
-                                  <Calendar className="w-4 h-4" />
-                                  {language === 'fa' 
-                                    ? formatPersianDate(new Date(shift.shift_date), 'yyyy/mm/dd')
-                                    : format(new Date(shift.shift_date), 'MMM dd, yyyy')} • {shift.start_time} - {shift.end_time}
-                                </p>
-                                <p className="flex items-center gap-2">
-                                  <MapPin className="w-4 h-4" />
-                                  {shift.location}, {shift.city}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="flex items-center gap-2 mb-1">
-                                  <Clock className="w-4 h-4" />
-                                  {t('profile.hoursWorked')}: {language === 'fa' && shift.hours_worked ? formatPersianNumber(shift.hours_worked) : (shift.hours_worked || 'N/A')}
-                                </p>
-                                <p className="flex items-center gap-2 mb-1">
-                                  <Coins className="w-4 h-4" />
-                                  {t('profile.payment')}: {language === 'fa' 
-                                    ? formatPersianCurrency(parseInt(shift.worker_payment || 0))
-                                    : `${parseInt(shift.worker_payment || 0).toLocaleString()} IRR`}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-2">
-                                  {t('profile.completedOn')} {language === 'fa' 
-                                    ? formatPersianDate(new Date(shift.shift_date), 'yyyy/mm/dd')
-                                    : format(new Date(shift.shift_date), 'MMM dd, yyyy')}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="ml-4 rtl:ml-0 rtl:mr-4">
-                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4" />
-                              {t('profile.completed')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'reviews' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">{t('profile.reviews')}</h2>
-                {ratings.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg">{t('profile.noReviews')}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {ratings.map((rating: any) => (
-                      <div key={rating.id} className="card">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-5 h-5 ${
-                                      i < rating.rating
-                                        ? 'text-yellow-400 fill-yellow-400'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="font-semibold">{rating.rating}/5</span>
-                            </div>
-                            {rating.review_text && (
-                              <p className="text-gray-700 mb-2">{rating.review_text}</p>
-                            )}
-                            <p className="text-sm text-gray-500">
-                              {t('profile.by')} {rating.rater_first_name} {rating.rater_last_name} • {format(new Date(rating.created_at), 'MMM dd, yyyy')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'info' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">{t('profile.profileInfo')}</h2>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">{t('profile.personalDetails')}</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.name')}</p>
-                        <p className="font-medium">{user.firstName} {user.lastName}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-medium">{user.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.yearsOfExperience')}</p>
-                        <p className="font-medium">{profile.experience_years || 0} {t('profile.years')}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">{t('profile.averageRating')}</p>
-                        <p className="font-medium">
-                          {profile.average_rating > 0 ? parseFloat(profile.average_rating).toFixed(1) : 'N/A'} 
-                          {profile.total_ratings > 0 && ` (${profile.total_ratings} ${t('profile.reviews')})`}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {profile.bio && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">{t('profile.bio')}</h3>
-                      <p className="text-gray-700">{profile.bio}</p>
-                    </div>
-                  )}
-
-                  {profile.skills && profile.skills.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">{t('profile.skills')}</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.skills.map((skill: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {profile.preferred_locations && profile.preferred_locations.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">{t('profile.preferredLocations')}</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.preferred_locations.map((location: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm"
-                          >
-                            {location}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // Business profile view
+  const modalDurationHours = availabilityModal
+    ? formatDurationHours(availabilityModal.start, availabilityModal.end)
+    : 0;
+
+  const availabilityModalTitle = availabilityModal
+    ? language === 'fa'
+      ? `${toPersianNum(availabilityModal.day.jalaliDay)} ${
+          jalaliMonthNamesFa[availabilityModal.day.jalaliMonth - 1]
+        }`
+      : format(availabilityModal.day.date, 'MMM dd, yyyy')
+    : '';
+
+  const modalDurationLabel = availabilityModal
+    ? getDurationLabel(modalDurationHours)
+    : '';
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8">Business Profile</h1>
-      <div className="card">
-        <p className="text-gray-600">Business profile view coming soon...</p>
-        <Link href="/profile/edit" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
-          Edit Business Profile
-        </Link>
+    <div
+      className="min-h-screen bg-[#f9f9f9] text-neutral-900"
+      dir={language === 'fa' ? 'rtl' : 'ltr'}
+    >
+      <div className="max-w-[1229px] mx-auto px-8 pt-6 pb-8 space-y-6">
+        <div className="flex justify-end" dir="ltr">
+          <div className="flex items-center gap-2 text-neutral-900">
+            <h1
+              className={`text-lg font-bold ${
+                language === 'fa' ? 'text-right' : ''
+              }`}
+            >
+              {language === 'fa' ? 'پروفایل' : 'Profile'}
+            </h1>
+            <button
+              type="button"
+              onClick={() => router.push('/shifts')}
+              className="inline-flex items-center justify-center rounded-full size-8 border border-gray-300 hover:bg-gray-100 transition-colors"
+              aria-label={language === 'fa' ? 'رفتن به شیفت‌ها' : 'Go to shifts'}
+            >
+              <ArrowRight className={`w-4 h-4 text-primary-600 ${language === 'fa' ? '' : 'rotate-180'}`} />
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <aside className="w-full max-w-[380px] bg-white rounded-[30px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="text-sm font-bold">
+              {language === 'fa' ? 'تنظیمات' : 'Settings'}
+            </div>
+            <div className="space-y-3">
+              {settingsItems.map(({ icon: Icon, label, helper, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="flex items-center justify-between h-[72px] rounded-[14px] px-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="size-10 rounded-full bg-[rgba(26,37,162,0.1)] flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-[#1a25a2]" />
+                    </span>
+                    <div className="text-sm">
+                      <div className="font-semibold">{label}</div>
+                      <div className="text-xs text-neutral-500">{helper}</div>
+                    </div>
+                  </div>
+                  <span className={`text-neutral-400 text-base ${language === 'fa' ? '' : 'rotate-180'}`}>
+                    ‹
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200/70 pt-4 space-y-4">
+            <div className="text-sm font-bold opacity-70">
+              {language === 'fa' ? 'اطلاعات حساب' : 'Account Information'}
+            </div>
+            <div className="space-y-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">
+                  {language === 'fa' ? 'ایمیل' : 'Email'}
+                </span>
+                <span className="text-neutral-900 break-words">
+                  {user.email}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">
+                  {language === 'fa' ? 'تلفن' : 'Phone'}
+                </span>
+                <span className="text-neutral-900">
+                  {language === 'fa' ? toPersianNum(phone) : phone}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">
+                  {language === 'fa' ? 'عضویت از' : 'Member Since'}
+                </span>
+                <span className="text-neutral-900">
+                  {language === 'fa'
+                    ? `${toPersianNum(memberSinceJd)} ${jalaliMonthNamesFa[memberSinceJm - 1]} ${toPersianNum(memberSinceJy)}`
+                    : format(memberSinceDate, 'MMM dd, yyyy')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200/70 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+              className="w-full text-left text-sm font-bold text-[#e7000b] hover:text-[#c10009] transition-colors"
+            >
+              {language === 'fa' ? 'خروج از حساب کاربری' : 'Log out'}
+            </button>
+          </div>
+        </aside>
+
+        <main className="flex-1 space-y-6">
+          <section className="bg-gradient-to-b from-[#1a25a2] to-[#b16ff8] rounded-[30px] text-white p-8">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+              <div className="flex-1">
+                <div className="relative size-[120px] mb-6">
+                  {profile.profile_picture_url ? (
+                    <img
+                      src={profile.profile_picture_url}
+                      alt="Profile avatar"
+                      className="size-full rounded-full object-cover border-4 border-white/30"
+                    />
+                  ) : (
+                    <div className="size-full rounded-full border-4 border-white/30 flex items-center justify-center">
+                      <User className="w-14 h-14 text-white/90" />
+                    </div>
+                  )}
+                  <Link
+                    href="/profile/edit"
+                    className="absolute bottom-2 left-2 size-10 rounded-full bg-white text-primary-600 flex items-center justify-center shadow-lg hover:bg-primary-50 transition"
+                    aria-label={language === 'fa' ? 'ویرایش تصویر' : 'Edit photo'}
+                  >
+                    <Edit className="w-5 h-5" />
+                  </Link>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold">
+                    {user.firstName} {user.lastName}
+                  </h2>
+                  <p className="text-white/80">
+                    {profile.job_title ||
+                      (language === 'fa' ? 'کارمند' : 'Worker')}
+                  </p>
+                  {profile.bio && (
+                    <p className="text-white/80 max-w-md leading-7">
+                      {profile.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="w-full lg:max-w-[600px] space-y-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {statsCards.map((card) => (
+                    <div
+                      key={card.label}
+                      className="rounded-[20px] bg-white/10 px-4 py-4 text-center"
+                    >
+                      <div className="text-xl font-bold">{card.value}</div>
+                      <div className="text-xs text-white/80">{card.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-[20px] bg-white/15 px-4 py-4">
+                    <div className="text-xs text-white/80">
+                      {language === 'fa' ? 'درآمد کل' : 'Total Earnings'}
+                    </div>
+                    <div className="text-lg font-bold mt-2">
+                      {formatPersianCurrency(totalEarnings).replace(
+                        language === 'fa' ? '' : ' ریال',
+                        language === 'fa' ? '' : ' IRR',
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-[20px] bg-white/15 px-4 py-4">
+                    <div className="text-xs text-white/80">
+                      {language === 'fa' ? 'درآمد این ماه' : 'This Month'}
+                    </div>
+                    <div className="text-lg font-bold mt-2">
+                      {formatPersianCurrency(monthEarnings).replace(
+                        language === 'fa' ? '' : ' ریال',
+                        language === 'fa' ? '' : ' IRR',
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {profile.skills && profile.skills.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {profile.skills.slice(0, 6).map((skill: string) => (
+                  <span
+                    key={skill}
+                    className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white/90"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="bg-white rounded-[30px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-6 space-y-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-lg font-bold">
+                  {language === 'fa' ? 'موجودیت' : 'Availability'}
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handlePreviousMonth}
+                  className="inline-flex items-center justify-center rounded-[10px] border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+                  aria-label={language === 'fa' ? 'ماه قبل' : 'Previous month'}
+                >
+                  {language === 'fa' ? '‹' : '›'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  className="inline-flex items-center justify-center rounded-[10px] bg-[#f3f3f5] px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-[#e7e7ef] transition-colors"
+                  aria-label={language === 'fa' ? 'ماه بعد' : 'Next month'}
+                >
+                  {monthNames[(calendarState.month + 11) % 12]}
+                </button>
+                <div className="inline-flex items-center justify-center rounded-[10px] bg-[#f3f3f5] px-4 py-2 text-sm font-medium text-neutral-900">
+                  {language === 'fa'
+                    ? toPersianNum(calendarState.year)
+                    : calendarState.year}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetToToday}
+                  className="inline-flex items-center justify-center rounded-[10px] border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  {language === 'fa' ? 'امروز' : 'Today'}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-7 gap-2 text-center text-xs text-neutral-500">
+                {weekdayNames.map((label) => (
+                  <span key={label}>{label}</span>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {calendarRows.flat().map((day) => {
+                  const key = `${day.jalaliYear}-${day.jalaliMonth}-${day.jalaliDay}`;
+                  const isAvailableDay = Boolean(availabilityMap[key]);
+                  const isHighlighted = isAvailableDay || highlightedDates.has(key);
+                  const isToday =
+                    day.jalaliYear === todayJalali.jy &&
+                    day.jalaliMonth === todayJalali.jm &&
+                    day.jalaliDay === todayJalali.jd;
+
+                  const baseClasses =
+                    'h-[42px] rounded-[10px] flex items-center justify-center text-sm transition-colors';
+
+                  const stateClasses = isHighlighted
+                    ? 'bg-[rgba(60,224,0,0.45)] text-neutral-900'
+                    : isToday
+                    ? 'border border-gray-200 text-neutral-900 bg-white'
+                    : day.isCurrentMonth
+                    ? 'bg-white text-neutral-900'
+                    : 'bg-white text-neutral-400 opacity-60';
+
+                  return (
+                    <button
+                      key={day.date.toISOString()}
+                      type="button"
+                      onClick={() => day.isCurrentMonth && openAvailabilityModal(day)}
+                      className={`${baseClasses} ${stateClasses} ${
+                        day.isCurrentMonth ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500' : 'cursor-default'
+                      }`}
+                      disabled={!day.isCurrentMonth}
+                    >
+                      {formatNumber(day.jalaliDay)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 flex items-center justify-end gap-6 text-xs text-neutral-500">
+              <div className="flex items-center gap-2">
+                <span className="size-3 rounded-full bg-[rgba(60,224,0,0.45)]" />
+                <span>{language === 'fa' ? 'موجود' : 'Available'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="size-3 rounded-full bg-gray-300" />
+                <span>{language === 'fa' ? 'غیرموجود' : 'Unavailable'}</span>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
+
+    {availabilityModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+        <div
+          className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-[0px_20px_45px_-20px_rgba(26,37,162,0.35)]"
+          dir={language === 'fa' ? 'rtl' : 'ltr'}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <button
+              type="button"
+              onClick={closeAvailabilityModal}
+              className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 transition-colors"
+              aria-label={language === 'fa' ? 'بستن' : 'Close'}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex-1 text-center px-2">
+              <h2 className="text-base font-semibold text-neutral-900">
+                {language === 'fa'
+                  ? `انتخاب ساعات موجودیت برای ${availabilityModalTitle}`
+                  : `Set availability for ${availabilityModalTitle}`}
+              </h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                {language === 'fa'
+                  ? 'بازه زمانی موجودیت خود را مشخص کنید'
+                  : 'Choose the time window you are available'}
+              </p>
+            </div>
+            <div className="rounded-full bg-gray-100 p-2 text-primary-600">
+              <Clock className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="flex flex-col gap-2 text-sm font-medium text-neutral-600">
+                {language === 'fa' ? 'از ساعت:' : 'From'}
+                <select
+                  value={availabilityModal.start}
+                  onChange={(event) =>
+                    setAvailabilityModal((prev) =>
+                      prev ? { ...prev, start: event.target.value } : prev,
+                    )
+                  }
+                  className="h-12 rounded-[12px] border border-gray-200 bg-gray-50 px-3 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time}>
+                      {language === 'fa' ? toPersianNum(time) : time}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-2 text-sm font-medium text-neutral-600">
+                {language === 'fa' ? 'تا ساعت:' : 'To'}
+                <select
+                  value={availabilityModal.end}
+                  onChange={(event) =>
+                    setAvailabilityModal((prev) =>
+                      prev ? { ...prev, end: event.target.value } : prev,
+                    )
+                  }
+                  className="h-12 rounded-[12px] border border-gray-200 bg-gray-50 px-3 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time}>
+                      {language === 'fa' ? toPersianNum(time) : time}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="rounded-[16px] bg-gray-50 px-4 py-3 text-sm text-neutral-600">
+              {language === 'fa' ? 'مدت زمان: ' : 'Duration: '}
+              <span className="font-semibold text-neutral-900">
+                {modalDurationLabel}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={markUnavailable}
+                className="rounded-[12px] border border-gray-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-100 transition-colors"
+              >
+                {language === 'fa' ? 'ناموجود' : 'Unavailable'}
+              </button>
+              <button
+                type="button"
+                onClick={closeAvailabilityModal}
+                className="rounded-[12px] border border-gray-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-100 transition-colors"
+              >
+                {language === 'fa' ? 'انصراف' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={saveAvailability}
+                className="rounded-[12px] bg-gradient-to-r from-[#4e4be7] to-[#8a5cf6] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                {language === 'fa' ? 'ذخیره' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 }
+

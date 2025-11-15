@@ -9,7 +9,7 @@ const PLATFORM_FEE = parseInt(process.env.PLATFORM_FEE_PER_HOUR || '200000');
 // Get all shifts (with filters)
 router.get('/',
   [
-    query('industry').optional().isIn(['hospitality', 'events', 'logistics', 'retail', 'other']),
+    query('industry').optional().isIn(['رستوران و پذیرایی', 'رویدادها', 'لجستیک', 'خرده‌فروشی', 'سایر']),
     query('city').optional().isString(),
     query('minWage').optional().isInt(),
     query('maxWage').optional().isInt(),
@@ -165,7 +165,7 @@ router.post('/',
   [
     body('title').notEmpty().trim(),
     body('description').notEmpty(),
-    body('industry').isIn(['hospitality', 'events', 'logistics', 'retail', 'other']),
+    body('industry').isIn(['رستوران و پذیرایی', 'رویدادها', 'لجستیک', 'خرده‌فروشی', 'سایر']),
     body('location').notEmpty(),
     body('city').notEmpty(),
     body('shiftDate').isISO8601(),

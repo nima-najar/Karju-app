@@ -36,6 +36,49 @@ export function gregorianToJalali(gy: number, gm: number, gd: number): [number, 
 }
 
 /**
+ * Converts a Jalali (Persian) date to Gregorian date
+ */
+export function jalaliToGregorian(jy: number, jm: number, jd: number): [number, number, number] {
+  jy += 1595;
+  let days = -355668 + (365 * jy) + Math.floor(jy / 33) * 8 + Math.floor(((jy % 33) + 3) / 4)
+    + jd + (jm < 7 ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+
+  let gy = 400 * Math.floor(days / 146097);
+  days %= 146097;
+
+  if (days > 36524) {
+    gy += 100 * Math.floor((--days) / 36524);
+    days %= 36524;
+    if (days >= 365) days++;
+  }
+
+  gy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+
+  if (days > 365) {
+    gy += Math.floor((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+
+  const gd = days + 1;
+
+  const gregorianMonthLengths = [
+    0,
+    31,
+    ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28,
+    31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+  ];
+
+  let gm = 0;
+  let dayCounter = gd;
+  for (gm = 1; gm <= 12 && dayCounter > gregorianMonthLengths[gm]; gm++) {
+    dayCounter -= gregorianMonthLengths[gm];
+  }
+
+  return [gy, gm, dayCounter];
+}
+
+/**
  * Gets Persian month names
  */
 const persianMonths = [
@@ -87,10 +130,37 @@ export function formatPersianCurrency(amount: number | string): string {
 }
 
 /**
+ * Formats a number with Persian numerals and adds تومان
+ */
+export function formatPersianCurrencyTomans(amount: number | string): string {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const numStr = Math.floor(num).toString();
+  // Add thousand separators manually
+  const parts = numStr.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${toPersianNum(parts.join('.'))} تومان`;
+}
+
+/**
  * Formats a number with Persian numerals
  */
 export function formatPersianNumber(num: number | string): string {
   const numStr = typeof num === 'string' ? num : num.toString();
   return toPersianNum(numStr);
+}
+
+/**
+ * Formats time string with Persian numerals (e.g., "11:00" -> "۱۱:۰۰")
+ */
+export function formatPersianTime(time: string): string {
+  return toPersianNum(time);
+}
+
+/**
+ * Gets Persian translation for industry (now industry is already in Persian in DB)
+ */
+export function getPersianIndustry(industry: string): string {
+  // Industry is already in Persian in database, so just return it
+  return industry;
 }
 

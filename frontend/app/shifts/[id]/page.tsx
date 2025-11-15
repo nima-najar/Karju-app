@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { shiftsAPI, applicationsAPI } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatPersianDate, formatPersianCurrency, formatPersianNumber, gregorianToJalali, toPersianNum } from '@/lib/persianUtils';
+import { formatPersianDate, formatPersianCurrency, formatPersianNumber, gregorianToJalali, toPersianNum, formatPersianTime, getPersianIndustry } from '@/lib/persianUtils';
 import { format } from 'date-fns';
 import { MapPin, Star, Mail, XCircle, CheckCircle2 } from 'lucide-react';
 import { getUser } from '@/lib/auth';
@@ -83,6 +83,88 @@ export default function ShiftDetailPage() {
     return ((shift.id?.charCodeAt(0) || 0) % 50) / 10 + 1.5;
   };
 
+  // Extract role from shift title or industry
+  const getRole = (shift: any) => {
+    const titleLower = shift.title?.toLowerCase() || '';
+    const descLower = shift.description?.toLowerCase() || '';
+    const combined = titleLower + ' ' + descLower;
+    
+    if (language === 'fa') {
+      if (combined.includes('waiter') || combined.includes('گارسون') || combined.includes('server')) {
+        return 'گارسون';
+      }
+      if (combined.includes('barista') || combined.includes('باریستا')) {
+        return 'باریستا';
+      }
+      if (combined.includes('cashier') || combined.includes('صندوقدار')) {
+        return 'صندوقدار';
+      }
+      if (combined.includes('dj') || combined.includes('دی‌جی')) {
+        return 'DJ';
+      }
+      if (combined.includes('employee') || combined.includes('کارمند')) {
+        return 'کارمند';
+      }
+      return shift.industry === 'رستوران و پذیرایی' ? 'کارمند' : 'کارمند';
+    } else {
+      if (combined.includes('waiter') || combined.includes('server')) {
+        return 'Waiter';
+      }
+      if (combined.includes('barista')) {
+        return 'Barista';
+      }
+      if (combined.includes('cashier')) {
+        return 'Cashier';
+      }
+      if (combined.includes('dj')) {
+        return 'DJ';
+      }
+      return 'Employee';
+    }
+  };
+
+  // Extract neighborhood from location
+  const getNeighborhood = (location: string) => {
+    if (!location) return '';
+    
+    // Remove common prefixes
+    let neighborhood = location
+      .replace(/^خیابان\s+/, '')
+      .replace(/^بلوار\s+/, '')
+      .replace(/^کوچه\s+/, '')
+      .replace(/^میدان\s+/, '');
+    
+    // Split by comma and take first part
+    const parts = neighborhood.split('،');
+    neighborhood = parts[0].trim();
+    
+    // If it still contains "تهران", remove it
+    neighborhood = neighborhood.replace(/\s*تهران\s*$/, '').trim();
+    
+    return neighborhood || location;
+  };
+
+  // Render stars based on rating
+  const renderStars = (rating: number | null) => {
+    const stars = [];
+    const ratingValue = rating ? parseFloat(rating.toString()) : 0;
+    const filledStars = Math.round(ratingValue);
+    
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Star
+          key={i}
+          className={`w-5 h-5 ${
+            i <= filledStars && ratingValue > 0
+              ? 'text-yellow-400 fill-yellow-400'
+              : 'text-gray-300'
+          }`}
+        />
+      );
+    }
+    return stars;
+  };
+
   const getPersianDateLabel = (date: Date) => {
     if (language === 'fa') {
       const [jy, jm, jd] = gregorianToJalali(
@@ -149,7 +231,7 @@ export default function ShiftDetailPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ direction: 'ltr' }}>
+    <div className="min-h-screen bg-gray-50 font-sans" style={{ direction: 'ltr' }}>
       <div className="flex gap-6 p-6">
         {/* Left Sidebar - Available Shifts */}
         <div className="w-80" style={{ order: 1 }}>
@@ -178,7 +260,9 @@ export default function ShiftDetailPage() {
                       {getPersianDateLabel(new Date(shift.shift_date))}
                     </p>
                     <p className="text-sm text-gray-600 mb-2">
-                      {language === 'fa' ? 'ساعات' : 'Hours'}: {shift.start_time} - {shift.end_time}
+                      {language === 'fa' ? 'ساعات' : 'Hours'}: {language === 'fa' 
+                        ? `${formatPersianTime(shift.start_time)} - ${formatPersianTime(shift.end_time)}`
+                        : `${shift.start_time} - ${shift.end_time}`}
                     </p>
                     <p className="text-sm text-gray-600 mb-1">
                       {language === 'fa' ? 'ساعت /' : 'Hour /'} {language === 'fa' 
@@ -214,7 +298,9 @@ export default function ShiftDetailPage() {
                         {getPersianDateLabel(new Date(similarShift.shift_date))}
                       </p>
                       <p className="text-sm text-gray-600 mb-2">
-                        {language === 'fa' ? 'ساعات' : 'Hours'}: {similarShift.start_time} - {similarShift.end_time}
+                        {language === 'fa' ? 'ساعات' : 'Hours'}: {language === 'fa' 
+                          ? `${formatPersianTime(similarShift.start_time)} - ${formatPersianTime(similarShift.end_time)}`
+                          : `${similarShift.start_time} - ${similarShift.end_time}`}
                       </p>
                       <p className="text-sm text-gray-600 mb-1">
                         {language === 'fa' ? 'ساعت /' : 'Hour /'} {language === 'fa'
@@ -257,48 +343,48 @@ export default function ShiftDetailPage() {
             </div>
           </div>
 
-          {/* Header with Company Name, Job Title, Distance, and Rating */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">{shift.business_name || shift.title}</h1>
-                <div className="flex items-center gap-4">
-                  <p className="text-lg text-gray-700">{shift.title}</p>
-                  <span className="text-gray-500">•</span>
-                  <span className="text-gray-600">
-                    {language === 'fa' ? formatPersianNumber(distance) : distance} {language === 'fa' ? 'کیلومتر' : 'km'}
-                  </span>
-                </div>
+          {/* Header with Company Name, Rating, Position, and Business Description */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6" dir="rtl">
+            {/* Title (right) and Rating (left) */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-right flex-1">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {shift.business_name || 'فروشگاه'} - {getNeighborhood(shift.location)}
+                </h1>
               </div>
-              {shift.business_rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-lg font-semibold text-gray-900">
+              <div className="flex items-center gap-1 mr-4">
+                {renderStars(shift.business_rating)}
+                {shift.business_rating && (
+                  <span className="text-sm font-semibold text-gray-900 mr-1">
                     {parseFloat(shift.business_rating).toFixed(1)}
                   </span>
-                </div>
-              )}
-            </div>
-
-            {/* Location - Under Shift Info */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                <p className="text-gray-700">
-                  {shift.location}
-                  {shift.city && `, ${shift.city}`}
-                  {shift.province && `, ${shift.province}`}
-                </p>
+                )}
               </div>
             </div>
+
+            {/* Position and Distance */}
+            <div className="flex items-center gap-2 mb-3" dir="rtl">
+              <p className="text-purple-600 text-sm font-medium">{getRole(shift)}</p>
+              <span className="text-purple-600">-</span>
+              <span className="text-purple-600 text-sm">NaN کیلومتر</span>
+            </div>
+
+            {/* Business Description */}
+            <p className="text-sm text-gray-700 leading-relaxed mb-0" dir="rtl">
+              {shift.business_type === 'رستوران و پذیرایی' 
+                ? 'این رستوران با سال‌ها تجربه در ارائه خدمات با کیفیت، محیطی گرم و صمیمی برای کارکنان و مشتریان فراهم می‌کند. ما به دنبال افرادی هستیم که با اشتیاق و تعهد به تیم ما بپیوندند.'
+                : shift.business_type === 'خرده‌فروشی'
+                ? 'این فروشگاه با ارائه محصولات متنوع و با کیفیت، یکی از مراکز معتبر خرید در منطقه محسوب می‌شود. ما به دنبال کارکنان متعهد و با انگیزه برای ارائه بهترین خدمات به مشتریان هستیم.'
+                : 'این کسب و کار با تمرکز بر ارائه خدمات عالی، محیطی حرفه‌ای و پویا برای کارکنان فراهم می‌کند. ما به دنبال افرادی هستیم که با مهارت و تعهد به تیم ما بپیوندند.'}
+            </p>
           </div>
 
           {/* Job Description */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6" dir="rtl">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 text-right">
               {language === 'fa' ? 'توضیحات کار' : 'Job Description'}
             </h2>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line text-right">
               {displayDescription}
             </p>
             {shouldTruncate && (
@@ -314,14 +400,14 @@ export default function ShiftDetailPage() {
           </div>
 
           {/* Rules */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6" dir="rtl">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 text-right">
               {language === 'fa' ? 'قوانین' : 'Rules'}
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-4" dir="rtl">
               <div className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                <p className="text-gray-700">
+                <p className="text-gray-700 text-right">
                   {language === 'fa' 
                     ? 'این شرکت پرداخت ۱۴ روزه را تعیین کرده است.'
                     : 'This company has set a 14-day payment period.'}
@@ -329,7 +415,7 @@ export default function ShiftDetailPage() {
               </div>
               <div className="flex items-start gap-3">
                 <XCircle className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                <p className="text-gray-700">
+                <p className="text-gray-700 text-right">
                   {language === 'fa' 
                     ? `لغو کار باید پیش از ${formatPersianNumber(shift.cancellation_deadline_hours || 48)} ساعت قبل شیفت انجام بشه.`
                     : `Cancellation must be done ${shift.cancellation_deadline_hours || 48} hours before the shift.`}
@@ -340,8 +426,8 @@ export default function ShiftDetailPage() {
 
           {/* Required Skills */}
           {shift.required_skills && shift.required_skills.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6" dir="rtl">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 text-right">
                 {language === 'fa' ? 'مهارت‌های مورد نیاز' : 'Required Skills'}
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -359,8 +445,8 @@ export default function ShiftDetailPage() {
 
           {/* Dress Code - Under Required Skills */}
           {dressCodeItems.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <div className="bg-white rounded-lg shadow-md p-6" dir="rtl">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 text-right">
                 {language === 'fa' ? 'قوانین ظاهر و لباس' : 'Appearance and Dress Code Rules'}
               </h2>
               <div className="flex flex-wrap gap-2">

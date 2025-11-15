@@ -57,10 +57,10 @@ export default function ShiftsPage() {
                 onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
               >
                 <option value="">All Industries</option>
-                <option value="hospitality">Hospitality</option>
-                <option value="events">Events</option>
-                <option value="logistics">Logistics</option>
-                <option value="retail">Retail</option>
+                <option value="رستوران و پذیرایی">رستوران و پذیرایی</option>
+                <option value="رویدادها">رویدادها</option>
+                <option value="لجستیک">لجستیک</option>
+                <option value="خرده‌فروشی">خرده‌فروشی</option>
               </select>
             </div>
             <div>
