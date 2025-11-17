@@ -79,6 +79,18 @@ export function jalaliToGregorian(jy: number, jm: number, jd: number): [number, 
 }
 
 /**
+ * Gets the number of days in a Jalali month
+ */
+export function getJalaliMonthLength(jy: number, jm: number): number {
+  if (jm <= 6) return 31;
+  if (jm <= 11) return 30;
+  // Esfand (month 12) - check if it's a leap year
+  // Jalali leap years occur when (jy * 11 + 14) % 30 < 11
+  const isLeap = ((jy * 11 + 14) % 30) < 11;
+  return isLeap ? 30 : 29;
+}
+
+/**
  * Gets Persian month names
  */
 const persianMonths = [

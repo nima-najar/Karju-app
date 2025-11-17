@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const pool = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
+const { geocodeAddress } = require('../lib/geocoding');
 
 const router = express.Router();
 const PLATFORM_FEE = parseInt(process.env.PLATFORM_FEE_PER_HOUR || '200000');
@@ -27,6 +28,8 @@ router.get('/',
           b.business_name,
           b.business_type,
           b.city as business_city,
+          s.latitude,
+          s.longitude,
           (SELECT COUNT(*) FROM applications WHERE shift_id = s.id AND status = 'accepted') as filled_positions,
           (SELECT COUNT(*) FROM applications WHERE shift_id = s.id AND status = 'pending') as pending_applications,
           (SELECT COUNT(*) FROM applications WHERE shift_id = s.id) as total_applications
@@ -82,6 +85,74 @@ router.get('/',
         query += ` AND s.status = 'open'`;
       }
 
+      // Filter out past shifts - only show shifts from today onwards
+      // Also filter out shifts from today if their start time has passed (based on Iran timezone)
+      if (!req.query.includePast) {
+        // Get current date and time in Iran timezone (UTC+3:30)
+        const now = new Date();
+        const iranOffsetMinutes = 3.5 * 60; // Iran is UTC+3:30 = 210 minutes
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const iranTimeMs = utcTime + (iranOffsetMinutes * 60000);
+        const iranTime = new Date(iranTimeMs);
+        
+        // Get UTC components and add Iran offset
+        const utcHours = now.getUTCHours();
+        const utcMinutes = now.getUTCMinutes();
+        const utcSeconds = now.getUTCSeconds();
+        
+        // Add Iran offset (3 hours 30 minutes)
+        let iranHour = utcHours + 3;
+        let iranMinute = utcMinutes + 30;
+        let iranDay = now.getUTCDate();
+        let iranMonth = now.getUTCMonth() + 1;
+        let iranYear = now.getUTCFullYear();
+        
+        // Handle minute overflow
+        if (iranMinute >= 60) {
+          iranMinute -= 60;
+          iranHour += 1;
+        }
+        
+        // Handle hour overflow
+        if (iranHour >= 24) {
+          iranHour -= 24;
+          iranDay += 1;
+          // Handle day overflow (simplified - doesn't handle month/year boundaries)
+          const daysInMonth = new Date(iranYear, iranMonth, 0).getDate();
+          if (iranDay > daysInMonth) {
+            iranDay = 1;
+            iranMonth += 1;
+            if (iranMonth > 12) {
+              iranMonth = 1;
+              iranYear += 1;
+            }
+          }
+        }
+        
+        // Format date and time
+        const today = `${iranYear}-${String(iranMonth).padStart(2, '0')}-${String(iranDay).padStart(2, '0')}`;
+        const currentTime = `${String(iranHour).padStart(2, '0')}:${String(iranMinute).padStart(2, '0')}`;
+        
+        console.log('[Shifts Filter] Iran time:', today, currentTime);
+        console.log('[Shifts Filter] Query params:', { today, currentTime });
+        
+        paramCount++;
+        const todayParam = paramCount;
+        paramCount++;
+        const currentTimeParam = paramCount;
+        query += ` AND (
+          s.shift_date > $${todayParam}::date 
+          OR (
+            s.shift_date = $${todayParam}::date 
+            AND s.start_time >= $${currentTimeParam}::time
+          )
+        )`;
+        params.push(today);
+        params.push(currentTime);
+        
+        console.log('[Shifts Filter] Final query condition:', `shift_date > '${today}' OR (shift_date = '${today}' AND start_time >= '${currentTime}')`);
+      }
+
       query += ` ORDER BY s.shift_date ASC, s.start_time ASC`;
 
       const result = await pool.query(query, params);
@@ -97,6 +168,20 @@ router.get('/',
           shift.userApplication = appResult.rows[0] || null;
         }
       }
+
+      // Convert DECIMAL coordinates to numbers (PostgreSQL returns them as strings)
+      shifts.forEach(shift => {
+        if (shift.latitude !== null && shift.latitude !== undefined) {
+          shift.latitude = parseFloat(shift.latitude);
+        }
+        if (shift.longitude !== null && shift.longitude !== undefined) {
+          shift.longitude = parseFloat(shift.longitude);
+        }
+      });
+
+      // Debug: Log coordinates info
+      const shiftsWithCoords = shifts.filter(s => s.latitude && s.longitude);
+      console.log(`[API] Returning ${shifts.length} shifts, ${shiftsWithCoords.length} with coordinates`);
 
       res.json({ shifts });
     } catch (error) {
@@ -134,6 +219,14 @@ router.get('/:id', async (req, res) => {
     }
 
     const shift = result.rows[0];
+
+    // Convert DECIMAL coordinates to numbers
+    if (shift.latitude !== null && shift.latitude !== undefined) {
+      shift.latitude = parseFloat(shift.latitude);
+    }
+    if (shift.longitude !== null && shift.longitude !== undefined) {
+      shift.longitude = parseFloat(shift.longitude);
+    }
 
     // Get application count
     const appCountResult = await pool.query(
@@ -210,13 +303,18 @@ router.post('/',
 
       const businessId = businessResult.rows[0].id;
 
+      // Geocode address to get coordinates
+      const fullAddress = `${location}, ${city}${province ? `, ${province}` : ''}`;
+      const coordinates = await geocodeAddress(fullAddress);
+
       // Create shift
       const result = await pool.query(
         `INSERT INTO shifts (
           business_id, title, description, industry, location, city, province,
           shift_date, start_time, end_time, hourly_wage, number_of_positions,
-          required_skills, dress_code, cancellation_deadline_hours
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          required_skills, dress_code, cancellation_deadline_hours,
+          latitude, longitude
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING *`,
         [
           businessId,
@@ -234,6 +332,8 @@ router.post('/',
           requiredSkills || [],
           dressCode || null,
           cancellationDeadlineHours || 48,
+          coordinates?.latitude || null,
+          coordinates?.longitude || null,
         ]
       );
 
@@ -274,6 +374,21 @@ router.put('/:id',
         'cancellation_deadline_hours', 'status'
       ];
 
+      // Check if location-related fields are being updated
+      const locationChanged = updates.location !== undefined || 
+                              updates.city !== undefined || 
+                              updates.province !== undefined;
+
+      // Geocode address if location changed
+      let coordinates = null;
+      if (locationChanged) {
+        const location = updates.location || shiftResult.rows[0].location;
+        const city = updates.city || shiftResult.rows[0].city;
+        const province = updates.province || shiftResult.rows[0].province;
+        const fullAddress = `${location}, ${city}${province ? `, ${province}` : ''}`;
+        coordinates = await geocodeAddress(fullAddress);
+      }
+
       const updateFields = [];
       const values = [];
       let paramCount = 0;
@@ -284,6 +399,24 @@ router.put('/:id',
           updateFields.push(`${field} = $${paramCount}`);
           values.push(updates[field]);
         }
+      }
+
+      // Add coordinates if location changed
+      if (locationChanged && coordinates) {
+        paramCount++;
+        updateFields.push(`latitude = $${paramCount}`);
+        values.push(coordinates.latitude);
+        paramCount++;
+        updateFields.push(`longitude = $${paramCount}`);
+        values.push(coordinates.longitude);
+      } else if (locationChanged) {
+        // If geocoding failed, set to null
+        paramCount++;
+        updateFields.push(`latitude = $${paramCount}`);
+        values.push(null);
+        paramCount++;
+        updateFields.push(`longitude = $${paramCount}`);
+        values.push(null);
       }
 
       if (updateFields.length === 0) {

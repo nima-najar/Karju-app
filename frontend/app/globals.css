@@ -116,3 +116,52 @@
     @apply bg-[#17233e] border-white/10 text-[#f8fafc] placeholder-[#94a3c6];
   }
 }
+
+/* Leaflet popup styling */
+.shift-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000 !important;
+  position: relative !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.shift-popup .leaflet-popup-content {
+  margin: 0;
+  padding: 0;
+}
+
+.shift-popup .leaflet-popup-tip {
+  background: white;
+  z-index: 10000 !important;
+}
+
+/* Ensure popup is visible */
+.leaflet-popup {
+  z-index: 10000 !important;
+  position: absolute !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 10000 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  z-index: 10000 !important;
+  position: relative !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Override any hidden styles */
+.leaflet-container .leaflet-popup {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

@@ -58,8 +58,22 @@ export default function Navbar() {
     setShowLangMenu(false);
   };
 
-  const primaryLabel = language === 'fa' ? 'استخدام نیرو' : 'Hire talent';
-  const secondaryLabel = language === 'fa' ? 'شروع جستجوی شغل' : 'Find shifts';
+  // Check if we're on a page that should show login/register buttons instead of hire/find buttons
+  const isAppPage = pathname?.startsWith('/shifts') || 
+                    pathname?.startsWith('/dashboard') || 
+                    pathname?.startsWith('/profile') ||
+                    pathname === '/login' ||
+                    pathname === '/register';
+  
+  const primaryLabel = isAppPage 
+    ? (language === 'fa' ? 'ثبت نام' : 'Sign up')
+    : (language === 'fa' ? 'استخدام نیرو' : 'Hire talent');
+  const secondaryLabel = isAppPage
+    ? (language === 'fa' ? 'ورود' : 'Login')
+    : (language === 'fa' ? 'شروع جستجوی شغل' : 'Find shifts');
+  
+  const primaryHref = isAppPage ? '/register' : '/register';
+  const secondaryHref = isAppPage ? '/login' : '/shifts';
 
   return (
     <nav className="bg-[#6a35c1] text-white shadow-md sticky top-0 z-50">
@@ -130,13 +144,13 @@ export default function Navbar() {
             ) : (
               <div className="flex items-center gap-4">
                 <Link
-                  href="/register"
+                  href={primaryHref}
                   className="px-4 py-2 rounded-full bg-white text-[#6a35c1] font-semibold hover:bg-primary-100 hover:text-[#4c1d95] transition"
                 >
                   {primaryLabel}
                 </Link>
                 <Link
-                  href="/shifts"
+                  href={secondaryHref}
                   className="font-semibold text-white hover:text-primary-100"
                 >
                   {secondaryLabel}

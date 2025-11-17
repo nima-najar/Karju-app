@@ -4,9 +4,20 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { shiftsAPI } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatPersianDate, formatPersianCurrency, formatPersianCurrencyTomans, formatPersianNumber, gregorianToJalali, jalaliToGregorian, toPersianNum, formatPersianTime, getPersianIndustry } from '@/lib/persianUtils';
+import { formatPersianDate, formatPersianCurrency, formatPersianCurrencyTomans, formatPersianNumber, gregorianToJalali, jalaliToGregorian, toPersianNum, formatPersianTime, getPersianIndustry, getJalaliMonthLength } from '@/lib/persianUtils';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isSameDay } from 'date-fns';
-import { Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, Map } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for map component to avoid SSR issues
+const ShiftsMap = dynamic(() => import('@/components/ShiftsMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="text-gray-500">در حال بارگذاری نقشه...</div>
+    </div>
+  ),
+});
 
 interface Shift {
   id: number;
@@ -24,7 +35,22 @@ interface Shift {
   number_of_positions: number;
   filled_positions: number;
   userApplication?: any;
+  latitude?: number;
+  longitude?: number;
 }
+
+// Calculate distance between two coordinates using Haversine formula
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+};
 
 export default function ShiftsPage() {
   const { t, language } = useLanguage();
@@ -32,34 +58,46 @@ export default function ShiftsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [{ jalaliYear, jalaliMonth }, setJalaliView] = useState(() => {
-    const today = new Date();
-    const [jy, jm] = gregorianToJalali(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      today.getDate()
-    );
-    return { jalaliYear: jy, jalaliMonth: jm };
-  });
-  const isPersian = language === 'fa';
+  const [showMap, setShowMap] = useState(true);
+  const [selectedShiftId, setSelectedShiftId] = useState<number | undefined>();
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
-    startTime: '10:00',
     location: '',
     distance: 30,
     employer: '',
     industry: 'all',
   });
 
+  // Get user location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setLocationError(null);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setLocationError(error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    } else {
+      setLocationError('Geolocation is not supported by this browser');
+    }
+  }, []);
+
   useEffect(() => {
     loadShifts();
   }, [filters]);
-  useEffect(() => {
-    if (isPersian) {
-      const [gy, gm, gd] = jalaliToGregorian(jalaliYear, jalaliMonth, 1);
-      setCalendarMonth(new Date(gy, gm - 1, gd));
-    }
-  }, [isPersian, jalaliYear, jalaliMonth]);
-
 
   const loadShifts = async () => {
     try {
@@ -80,7 +118,22 @@ export default function ShiftsPage() {
       // if (filters.employer) params.business_name = filters.employer;
 
       const response = await shiftsAPI.getAll(params);
-      setShifts(response.data.shifts || []);
+      const loadedShifts = response.data.shifts || [];
+      
+      // Debug: Check coordinates
+      const shiftsWithCoords = loadedShifts.filter((s: Shift) => s.latitude && s.longitude);
+      console.log('Loaded shifts:', loadedShifts.length);
+      console.log('Shifts with coordinates:', shiftsWithCoords.length);
+      if (loadedShifts.length > 0) {
+        console.log('Sample shift:', {
+          id: loadedShifts[0].id,
+          location: loadedShifts[0].location,
+          lat: loadedShifts[0].latitude,
+          lng: loadedShifts[0].longitude
+        });
+      }
+      
+      setShifts(loadedShifts);
     } catch (error) {
       console.error('Error loading shifts:', error);
     } finally {
@@ -102,27 +155,41 @@ export default function ShiftsPage() {
   }, [shifts]);
 
   const filteredGroupedShifts = useMemo(() => {
-    if (!selectedDate) {
-      return groupedShifts;
+    let filtered = groupedShifts;
+    
+    // Apply date filter
+    if (selectedDate) {
+      const selectedKey = format(selectedDate, 'yyyy-MM-dd');
+      const selectedShifts = groupedShifts[selectedKey];
+      if (!selectedShifts || selectedShifts.length === 0) {
+        return {};
+      }
+      filtered = { [selectedKey]: selectedShifts };
     }
-
-    const selectedKey = format(selectedDate, 'yyyy-MM-dd');
-
-    if (selectedKey && groupedShifts[selectedKey]) {
-      return { [selectedKey]: groupedShifts[selectedKey] };
+    
+    // Apply distance filter if user location is available
+    if (userLocation && filters.distance) {
+      const filteredByDistance: { [key: string]: Shift[] } = {};
+      Object.entries(filtered).forEach(([dateKey, dateShifts]) => {
+        const shiftsWithinDistance = dateShifts.filter((shift) => {
+          if (!shift.latitude || !shift.longitude) return false;
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            shift.latitude,
+            shift.longitude
+          );
+          return distance <= filters.distance;
+        });
+        if (shiftsWithinDistance.length > 0) {
+          filteredByDistance[dateKey] = shiftsWithinDistance;
+        }
+      });
+      return filteredByDistance;
     }
-
-    const fallbackShifts = shifts.filter((shift) => {
-      const shiftKey = shift.shift_date.split('T')[0];
-      return shiftKey === selectedKey;
-    });
-
-    if (fallbackShifts.length > 0) {
-      return { [selectedKey]: fallbackShifts };
-    }
-
-    return {};
-  }, [groupedShifts, selectedDate, shifts]);
+    
+    return filtered;
+  }, [groupedShifts, selectedDate, userLocation, filters.distance]);
 
   // Calculate estimated income in tomans
   const calculateEstimatedIncome = (shift: Shift) => {
@@ -134,66 +201,92 @@ export default function ShiftsPage() {
     return hours * hourlyWageTomans;
   };
 
-  // Get distance (mock for now - you can add real distance calculation based on user location)
-  const getDistance = (shift: Shift) => {
-    // Mock distance - replace with real calculation using geolocation API
-    // For now, using a consistent value based on shift ID for demo purposes
-    return ((shift.id % 50) / 10 + 1.5).toFixed(2);
+  // Get distance for a shift
+  const getDistance = (shift: Shift): number | null => {
+    if (!userLocation || !shift.latitude || !shift.longitude) {
+      return null;
+    }
+    return calculateDistance(
+      userLocation.lat,
+      userLocation.lng,
+      shift.latitude,
+      shift.longitude
+    );
   };
 
-  const getJalaliMonthLength = (year: number, month: number) => {
-    if (month <= 6) return 31;
-    if (month <= 11) return 30;
-    const [gy, gm, gd] = jalaliToGregorian(year, month, 30);
-    const [tjy, tjm] = gregorianToJalali(gy, gm, gd);
-    return tjy === year && tjm === month ? 30 : 29;
-  };
-
-  const monthStartDate = useMemo(() => {
-    if (isPersian) {
-      const [gy, gm, gd] = jalaliToGregorian(jalaliYear, jalaliMonth, 1);
-      return new Date(gy, gm - 1, gd);
-    }
-    return startOfMonth(calendarMonth);
-  }, [isPersian, jalaliYear, jalaliMonth, calendarMonth]);
-
-  const calendarDays = useMemo(() => {
-    if (isPersian) {
-      const length = getJalaliMonthLength(jalaliYear, jalaliMonth);
-      return Array.from({ length }, (_, idx) => {
-        const day = idx + 1;
-        const [gy, gm, gd] = jalaliToGregorian(jalaliYear, jalaliMonth, day);
-        return {
-          date: new Date(gy, gm - 1, gd),
-          displayDay: day,
-        };
-      });
-    }
-
-    const start = startOfMonth(calendarMonth);
-    const end = endOfMonth(calendarMonth);
-    return eachDayOfInterval({ start, end }).map((date) => ({
-      date,
-      displayDay: date.getDate(),
-    }));
-  }, [isPersian, jalaliYear, jalaliMonth, calendarMonth]);
-
-  const firstDayOfWeek = getDay(monthStartDate);
+  // Calendar helpers - Build calendar based on Persian dates
+  // Get current Persian date from calendarMonth
+  const [currentJy, currentJm, currentJd] = gregorianToJalali(
+    calendarMonth.getFullYear(),
+    calendarMonth.getMonth() + 1,
+    calendarMonth.getDate()
+  );
+  
+  // Get Persian month length
+  const persianMonthLength = getJalaliMonthLength(currentJy, currentJm);
+  
+  // Build calendar days: for each Persian day (1 to monthLength), convert to Gregorian
+  const calendarDays: Array<{ persianDay: number; gregorianDate: Date }> = [];
+  for (let jd = 1; jd <= persianMonthLength; jd++) {
+    const [gy, gm, gd] = jalaliToGregorian(currentJy, currentJm, jd);
+    const gregorianDate = new Date(gy, gm - 1, gd);
+    calendarDays.push({ persianDay: jd, gregorianDate });
+  }
+  
+  // Get first day of month offset (Persian week starts on Saturday = 0)
+  const firstDayGregorian = calendarDays[0]?.gregorianDate;
+  const firstDayOfWeek = firstDayGregorian ? getDay(firstDayGregorian) : getDay(startOfMonth(calendarMonth));
+  // Convert to Persian week (Saturday = 0, Sunday = 1, ..., Friday = 6)
   const persianFirstDay = firstDayOfWeek === 6 ? 0 : firstDayOfWeek + 1;
+  
   const persianWeekDays = language === 'fa' 
     ? ['شنبه', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'جمعه']
     : ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
-  const persianMonthNames = [
-    'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-    'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
-  ];
-
-  const getCalendarMonthLabel = () => {
-    if (isPersian) {
-      return `${persianMonthNames[jalaliMonth - 1]} ${toPersianNum(jalaliYear.toString())}`;
+  const getPersianMonthName = (date: Date) => {
+    if (language === 'fa') {
+      const [jy, jm] = gregorianToJalali(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        date.getDate()
+      );
+      const persianMonths = [
+        'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+        'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      ];
+      return `${persianMonths[jm - 1]} ${toPersianNum(jy.toString())}`;
     }
-    return format(calendarMonth, 'MMMM yyyy');
+    return format(date, 'MMMM yyyy');
+  };
+
+  // Helper to change Persian month
+  const changePersianMonth = (direction: 'next' | 'prev') => {
+    const [jy, jm, jd] = gregorianToJalali(
+      calendarMonth.getFullYear(),
+      calendarMonth.getMonth() + 1,
+      calendarMonth.getDate()
+    );
+    
+    let newJm = jm;
+    let newJy = jy;
+    
+    if (direction === 'next') {
+      newJm += 1;
+      if (newJm > 12) {
+        newJm = 1;
+        newJy += 1;
+      }
+    } else {
+      newJm -= 1;
+      if (newJm < 1) {
+        newJm = 12;
+        newJy -= 1;
+      }
+    }
+    
+    // Convert first day of new Persian month to Gregorian
+    const [gy, gm, gd] = jalaliToGregorian(newJy, newJm, 1);
+    setCalendarMonth(new Date(gy, gm - 1, gd));
   };
 
   const getPersianDateLabel = (date: Date) => {
@@ -204,7 +297,12 @@ export default function ShiftsPage() {
         date.getDate()
       );
       const persianWeekDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
-      const dayOfWeek = persianWeekDays[date.getDay()];
+      // Convert Gregorian day of week to Persian day of week
+      // Gregorian: Sunday=0, Monday=1, ..., Saturday=6
+      // Persian: Saturday=0, Sunday=1, ..., Friday=6
+      const gregorianDay = date.getDay();
+      const persianDayIndex = (gregorianDay + 1) % 7;
+      const dayOfWeek = persianWeekDays[persianDayIndex];
       return `${dayOfWeek} ${toPersianNum(jd.toString())} ${['', 'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'][jm]}`;
     }
     return format(date, 'EEEE, MMMM dd');
@@ -279,6 +377,45 @@ export default function ShiftsPage() {
     return neighborhood || location;
   };
 
+  // Get all shifts for map (not filtered by date)
+  const allShiftsForMap = useMemo(() => {
+    let filtered = shifts.filter(shift => {
+      if (filters.industry && filters.industry !== 'all' && shift.industry !== filters.industry) {
+        return false;
+      }
+      return true;
+    });
+    
+    // Apply distance filter if user location is available
+    if (userLocation && filters.distance) {
+      filtered = filtered.filter((shift) => {
+        if (!shift.latitude || !shift.longitude) return false;
+        const distance = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          shift.latitude,
+          shift.longitude
+        );
+        return distance <= filters.distance;
+      });
+    }
+    
+    console.log('[ShiftsPage] allShiftsForMap:', {
+      totalShifts: shifts.length,
+      filteredShifts: filtered.length,
+      withCoords: filtered.filter(s => s.latitude && s.longitude).length,
+      userLocation: userLocation,
+      distanceFilter: filters.distance,
+      sample: filtered[0] ? {
+        id: filtered[0].id,
+        lat: filtered[0].latitude,
+        lng: filtered[0].longitude
+      } : null
+    });
+    
+    return filtered;
+  }, [shifts, filters.industry, userLocation, filters.distance]);
+
   return (
     <div className="min-h-screen bg-[#f9f9f9]" dir="rtl">
       <div className="flex gap-6 p-6 h-screen overflow-hidden">
@@ -289,46 +426,14 @@ export default function ShiftsPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <button
-                onClick={() => {
-                  if (isPersian) {
-                    setJalaliView((prev) => {
-                      let month = prev.jalaliMonth - 1;
-                      let year = prev.jalaliYear;
-                      if (month < 1) {
-                        month = 12;
-                        year -= 1;
-                      }
-                      const [gy, gm, gd] = jalaliToGregorian(year, month, 1);
-                      setCalendarMonth(new Date(gy, gm - 1, gd));
-                      return { jalaliYear: year, jalaliMonth: month };
-                    });
-                  } else {
-                    setCalendarMonth(subMonths(calendarMonth, 1));
-                  }
-                }}
+                onClick={() => changePersianMonth('prev')}
                 className="p-1 hover:bg-gray-100 rounded-[4px] size-7 flex items-center justify-center"
               >
                 <ChevronLeft className="w-5 h-5 text-[#4A5565]" />
               </button>
-              <h3 className="font-bold text-base text-gray-900">{getCalendarMonthLabel()}</h3>
+              <h3 className="font-bold text-base text-gray-900">{getPersianMonthName(calendarMonth)}</h3>
               <button
-                onClick={() => {
-                  if (isPersian) {
-                    setJalaliView((prev) => {
-                      let month = prev.jalaliMonth + 1;
-                      let year = prev.jalaliYear;
-                      if (month > 12) {
-                        month = 1;
-                        year += 1;
-                      }
-                      const [gy, gm, gd] = jalaliToGregorian(year, month, 1);
-                      setCalendarMonth(new Date(gy, gm - 1, gd));
-                      return { jalaliYear: year, jalaliMonth: month };
-                    });
-                  } else {
-                    setCalendarMonth(addMonths(calendarMonth, 1));
-                  }
-                }}
+                onClick={() => changePersianMonth('next')}
                 className="p-1 hover:bg-gray-100 rounded-[4px] size-7 flex items-center justify-center"
               >
                 <ChevronRight className="w-5 h-5 text-[#4A5565]" />
@@ -349,14 +454,14 @@ export default function ShiftsPage() {
               {Array.from({ length: persianFirstDay }).map((_, idx) => (
                 <div key={`empty-${idx}`} className="h-10"></div>
               ))}
-              {calendarDays.map(({ date, displayDay }) => {
-                const isSelected = selectedDate && isSameDay(date, selectedDate);
-                const dayNumber = isPersian ? toPersianNum(displayDay.toString()) : displayDay;
-                const isToday = isSameDay(date, new Date());
+              {calendarDays.map((dayInfo) => {
+                const isSelected = selectedDate && isSameDay(dayInfo.gregorianDate, selectedDate);
+                const dayNumber = language === 'fa' ? toPersianNum(dayInfo.persianDay.toString()) : dayInfo.persianDay;
+                const isToday = isSameDay(dayInfo.gregorianDate, new Date());
                 return (
                   <button
-                    key={date.toISOString()}
-                    onClick={() => setSelectedDate(date)}
+                    key={dayInfo.gregorianDate.toISOString()}
+                    onClick={() => setSelectedDate(dayInfo.gregorianDate)}
                     className={`h-10 rounded-[4px] text-sm transition-colors flex items-center justify-center ${
                       isSelected 
                         ? 'bg-[rgba(26,37,162,0.55)] text-black' 
@@ -397,19 +502,6 @@ export default function ShiftsPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Start Time */}
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-900 mb-2 opacity-70">
-                  {language === 'fa' ? 'زمان شروع' : 'Start Time'}
-                </label>
-                <input
-                  type="time"
-                  value={filters.startTime}
-                  onChange={(e) => setFilters({ ...filters, startTime: e.target.value })}
-                  className="w-full h-[42px] px-4 py-2 bg-white border border-[#d1d5dc] rounded-[10px] text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
               {/* Location - Basic Filter */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-900 mb-2 opacity-70">
@@ -487,8 +579,38 @@ export default function ShiftsPage() {
           </div>
         </div>
 
-        {/* Shifts List - Right side */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Main Content Area - Right side */}
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+          {/* Toggle Map/List View */}
+          <div className="flex items-center justify-end gap-2 bg-white p-2 rounded-lg">
+            <button
+              onClick={() => setShowMap(!showMap)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                showMap 
+                  ? 'bg-[#1a25a2] text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Map className="w-4 h-4" />
+              <span>{language === 'fa' ? 'نقشه' : 'Map'}</span>
+            </button>
+          </div>
+
+          {/* Map or List View */}
+          {showMap ? (
+            <div className="flex-1 bg-white rounded-lg shadow-sm overflow-hidden relative" style={{ zIndex: 1 }}>
+              <ShiftsMap 
+                shifts={allShiftsForMap}
+                selectedShiftId={selectedShiftId}
+                onShiftClick={(id) => {
+                  // Just update selected state, don't navigate
+                  setSelectedShiftId(id);
+                }}
+                language={language}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -518,8 +640,13 @@ export default function ShiftsPage() {
                           return (
                             <Link
                               key={shift.id}
+                              id={`shift-${shift.id}`}
                               href={`/shifts/${shift.id}`}
-                              className="bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] overflow-hidden hover:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] transition-shadow flex flex-col h-full"
+                              className={`bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] overflow-hidden hover:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] transition-shadow ${
+                                selectedShiftId === shift.id ? 'ring-2 ring-[#1a25a2]' : ''
+                              }`}
+                              onMouseEnter={() => setSelectedShiftId(shift.id)}
+                              onMouseLeave={() => setSelectedShiftId(undefined)}
                             >
                               <div className="relative">
                                 <div className="w-full h-[200px] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center overflow-hidden">
@@ -545,7 +672,7 @@ export default function ShiftsPage() {
                                   </div>
                                 )}
                               </div>
-                              <div className="p-4 flex flex-col justify-between flex-1 min-h-[160px]" dir="rtl">
+                              <div className="p-4 h-[157px] flex flex-col justify-between" dir="rtl">
                                 {/* Title: Business Name - Neighborhood */}
                                 <div>
                                   <h3 className="font-bold text-lg mb-2 text-gray-900 text-right">
@@ -555,8 +682,14 @@ export default function ShiftsPage() {
                                   {/* Position with purple color and distance */}
                                   <div className="flex items-center gap-1.5 mb-3">
                                     <p className="text-[#1a25a2] text-base font-normal">{getRole(shift)}</p>
-                                    <span className="text-[#1a25a2]">·</span>
-                                    <span className="text-[#1a25a2] text-base font-normal">{formatPersianNumber(distance)} کیلومتر</span>
+                                    {distance !== null && (
+                                      <>
+                                        <span className="text-[#1a25a2]">·</span>
+                                        <span className="text-[#1a25a2] text-base font-normal">
+                                          {formatPersianNumber(distance.toFixed(1))} کیلومتر
+                                        </span>
+                                      </>
+                                    )}
                                   </div>
                                   
                                   {/* Hourly Rate (right) and Time (left) */}
@@ -592,6 +725,8 @@ export default function ShiftsPage() {
                     </div>
                   );
                 })}
+            </div>
+          )}
             </div>
           )}
         </div>
