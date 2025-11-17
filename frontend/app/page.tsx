@@ -387,8 +387,8 @@ export default function HomePage() {
 
             <div className="flex flex-col gap-2 text-sm text-neutral-600">
               <p className="text-neutral-900 font-semibold mb-1">برای متقاضیان</p>
-              <Link href="/404" className="hover:text-[#585bdb] transition">جستجوی شغل</Link>
-              <Link href="/404" className="hover:text-[#585bdb] transition">ثبت‌نام</Link>
+              <Link href="/shifts" className="hover:text-[#585bdb] transition">جستجوی شغل</Link>
+              <Link href="/register" className="hover:text-[#585bdb] transition">ثبت‌نام</Link>
               <Link href="/404" className="hover:text-[#585bdb] transition">راهنمای استفاده</Link>
               <Link href="/404" className="hover:text-[#585bdb] transition">سوالات متداول</Link>
             </div>

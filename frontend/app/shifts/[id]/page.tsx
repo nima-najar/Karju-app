@@ -185,18 +185,8 @@ export default function ShiftDetailPage() {
       router.push('/login');
       return;
     }
-    
-    // Apply to the selected shift
-    try {
-      await applicationsAPI.apply({
-        shiftId: selectedShiftId || shift.id,
-        applicationText: '',
-      });
-      alert(t('shifts.applicationSubmitted'));
-      router.push('/dashboard');
-    } catch (error: any) {
-      alert(error.response?.data?.message || t('shifts.applicationFailed'));
-    }
+
+    router.push(`/shifts/${selectedShiftId || shift.id}/confirm`);
   };
 
   if (loading) {
