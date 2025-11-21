@@ -4,7 +4,19 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, MapPin, Phone, User, UserCheck, UserCircle, Wallet, Languages, FileText, GraduationCap } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  Phone,
+  User,
+  UserCheck,
+  UserCircle,
+  Wallet,
+  Languages,
+  FileText,
+  GraduationCap,
+} from 'lucide-react';
 import { profileAPI } from '@/lib/api';
 import { getUser } from '@/lib/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -46,6 +58,7 @@ const formatDate = (isoDate: string | null | undefined, language: 'fa' | 'en') =
 export default function PersonalInfoPage() {
   const router = useRouter();
   const { language } = useLanguage();
+  const isRTL = language === 'fa';
   const [user, setUser] = useState<any>(null);
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -444,7 +457,7 @@ const personalityTraitsList = useMemo(() => {
         language === 'fa'
           ? 'مشخصات فردی و مدارک شناسایی ثبت شده'
           : 'Basic personal details and identity information',
-      icon: <UserCircle className="w-5 h-5 text-[#1a25a2]" />,
+      icon: <UserCircle className="w-5 h-5 text-moss" />,
       fields: identityFields,
       highlight: true,
     },
@@ -454,7 +467,7 @@ const personalityTraitsList = useMemo(() => {
         language === 'fa'
           ? 'راه‌های ارتباطی و محل سکونت'
           : 'Communication details and location',
-      icon: <Phone className="w-5 h-5 text-[#1a25a2]" />,
+      icon: <Phone className="w-5 h-5 text-moss" />,
       fields: contactFields,
     },
     {
@@ -463,7 +476,7 @@ const personalityTraitsList = useMemo(() => {
         language === 'fa'
           ? 'اطلاعات حساب برای واریز درآمد'
           : 'Bank account details used for payouts',
-      icon: <Wallet className="w-5 h-5 text-[#1a25a2]" />,
+      icon: <Wallet className="w-5 h-5 text-moss" />,
       fields: bankingFields,
       footer: (
         <p className="text-xs text-gray-500">
@@ -479,17 +492,17 @@ const personalityTraitsList = useMemo(() => {
         language === 'fa'
           ? 'آخرین مقطع تحصیلی و زمینه تخصصی شما'
           : 'Your latest degree and specialization',
-      icon: <GraduationCap className="w-5 h-5 text-[#1a25a2]" />,
+      icon: <GraduationCap className="w-5 h-5 text-moss" />,
       fields: educationFields,
     },
   ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center">
+      <div className="min-h-screen bg-concrete flex items-center justify-center pt-24">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-          <p className="text-primary-700 mt-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-ink" />
+          <p className="text-ink font-bold mt-4 font-body">
             {language === 'fa' ? 'در حال بارگذاری اطلاعات...' : 'Loading personal information...'}
           </p>
         </div>
@@ -503,20 +516,20 @@ const personalityTraitsList = useMemo(() => {
 
   if (user.userType !== 'worker') {
     return (
-      <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center">
-        <div className="max-w-lg bg-white shadow rounded-2xl p-8 text-center space-y-4">
-          <UserCheck className="w-12 h-12 mx-auto text-primary-600" />
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="min-h-screen bg-concrete flex items-center justify-center pt-24">
+        <div className="max-w-lg bg-white dark:bg-concrete-dark dark:bg-concrete border-2 border-ink shadow-[4px_4px_0px_0px_#1a1a1a] rounded-[2rem] p-8 text-center space-y-4">
+          <UserCheck className="w-12 h-12 mx-auto text-safety" />
+          <h2 className="text-xl font-display text-ink">
             {language === 'fa' ? 'ویژگی در دست توسعه' : 'Feature coming soon'}
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-ink/70 font-body">
             {language === 'fa'
               ? 'نمایه اطلاعات شخصی برای کسب و کارها به‌زودی فعال می‌شود.'
               : 'Personal info dashboard for businesses will be available soon.'}
           </p>
           <Link
             href="/profile"
-            className="inline-flex items-center justify-center rounded-full bg-primary-600 px-6 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+            className="inline-flex items-center justify-center rounded-xl bg-ink text-concrete border-2 border-ink px-6 py-2 text-sm font-bold hover:bg-safety hover:text-ink hover:shadow-[2px_2px_0px_0px_#1a1a1a] transition-all"
           >
             {language === 'fa' ? 'بازگشت به پروفایل' : 'Back to profile'}
           </Link>
@@ -527,35 +540,34 @@ const personalityTraitsList = useMemo(() => {
 
   return (
     <div
-      className="min-h-screen bg-[#f9f9f9] text-neutral-900"
+      className="min-h-screen bg-concrete dark:bg-ink text-ink dark:text-concrete pt-28 pb-12"
       dir={language === 'fa' ? 'rtl' : 'ltr'}
     >
-      <div className="bg-gradient-to-b from-[#5b21b6] to-[#1a25a2] text-white">
+      <div className="bg-gradient-to-b from-ink to-moss text-concrete border-b-4 border-safety">
         <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => router.push('/profile')}
-                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 p-2 hover:bg-white/20 transition"
-                aria-label={language === 'fa' ? 'بازگشت' : 'Back'}
-              >
-                <ArrowRight className={`w-5 h-5 ${language === 'fa' ? '' : 'rotate-180'}`} />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+                <h1 className="text-3xl font-display">
                   {language === 'fa' ? 'اطلاعات شخصی' : 'Personal information'}
                 </h1>
-                <p className="text-white/80">
-                  {language === 'fa'
-                    ? 'مروری بر جزئیات هویتی و تماس شما در پلتفرم'
-                    : 'Overview of your identity and contact details on the platform'}
-                </p>
+                <Link
+                  href="/profile"
+                  className="inline-flex items-center justify-center w-14 h-14 rounded-full border-[3px] border-concrete text-concrete bg-transparent hover:bg-white/10 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)]"
+                  aria-label={language === 'fa' ? 'بازگشت به پروفایل' : 'Back to profile'}
+                >
+                  {isRTL ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
+                </Link>
               </div>
+              <p className="text-concrete-dark font-body">
+                {language === 'fa'
+                  ? 'مروری بر جزئیات هویتی و تماس شما در پلتفرم'
+                  : 'Overview of your identity and contact details on the platform'}
+              </p>
             </div>
             <Link
               href="/profile/edit#personal-info"
-              className="inline-flex items-center gap-2 rounded-full bg-white text-[#1a25a2] px-5 py-2 text-sm font-medium shadow hover:bg-white/90 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-concrete text-ink border-2 border-concrete px-5 py-2 text-sm font-bold shadow-[2px_2px_0px_0px_#1a1a1a] hover:bg-concrete-dark dark:bg-concrete transition-all"
             >
               <User className="w-4 h-4" />
               {language === 'fa' ? 'ویرایش اطلاعات' : 'Edit info'}
@@ -563,28 +575,28 @@ const personalityTraitsList = useMemo(() => {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="rounded-[24px] border border-white/15 bg-white/10 backdrop-blur-sm p-6 space-y-4">
+            <div className="rounded-[2rem] border-2 border-concrete/20 bg-concrete/10 backdrop-blur-sm p-6 space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-white/70">{displayedRole}</p>
-                  <p className="text-2xl font-semibold text-white">{displayedName}</p>
+                  <p className="text-sm text-concrete-dark font-body">{displayedRole}</p>
+                  <p className="text-2xl font-display text-concrete">{displayedName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs text-concrete-dark font-body">
                     {language === 'fa' ? 'درصد تکمیل پروفایل' : 'Profile completion'}
                   </p>
-                  <p className="text-4xl font-bold text-white">
+                  <p className="text-4xl font-display text-concrete">
                     {language === 'fa' ? toPersianNum(completionPercent) : completionPercent}%
                   </p>
                 </div>
               </div>
-              <div className="h-2 rounded-full bg-white/15 overflow-hidden">
+              <div className="h-2 rounded-full bg-concrete/20 overflow-hidden border-2 border-concrete/30">
                 <div
-                  className="h-full bg-[#00d4aa] rounded-full transition-all"
+                  className="h-full bg-moss rounded-full transition-all"
                   style={{ width: `${Math.min(100, Math.max(0, completionPercent))}%` }}
                 />
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-white/70">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-concrete-dark font-body">
                 <span>
                   {language === 'fa' ? 'عضویت از' : 'Member since'}: {memberSince}
                 </span>
@@ -596,12 +608,12 @@ const personalityTraitsList = useMemo(() => {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/15 bg-white/5 backdrop-blur-sm p-6 space-y-4">
-              <h3 className="text-sm font-semibold text-white">
+            <div className="rounded-[2rem] border-2 border-concrete/20 bg-concrete/5 backdrop-blur-sm p-6 space-y-4">
+              <h3 className="text-sm font-display text-concrete">
                 {language === 'fa' ? 'موارد نیاز به تکمیل' : 'Items requiring attention'}
               </h3>
               {pendingIdentityItems.length === 0 ? (
-                <div className="rounded-[14px] border border-white/20 bg-white/10 px-4 py-3 text-xs text-white">
+                <div className="rounded-xl border-2 border-concrete/20 bg-concrete/10 px-4 py-3 text-xs text-concrete font-body">
                   {language === 'fa'
                     ? 'تمام اطلاعات هویتی مورد نیاز تکمیل شده است.'
                     : 'All identity requirements are complete.'}
@@ -623,19 +635,19 @@ const personalityTraitsList = useMemo(() => {
                         : 'Verified';
                     const statusClass =
                       item.status === 'verified'
-                        ? 'text-[#00d4aa]'
+                        ? 'text-moss'
                         : item.status === 'pending'
-                        ? 'text-[#ffb800]'
-                        : 'text-red-200';
+                        ? 'text-safety'
+                        : 'text-safety';
                     return (
                       <div
                         key={item.key}
-                        className="flex items-center justify-between rounded-[14px] border border-white/10 bg-white/10 px-4 py-3 text-xs text-white"
+                        className="flex items-center justify-between rounded-xl border-2 border-concrete/20 bg-concrete/10 px-4 py-3 text-xs text-concrete font-body"
                       >
                         <span>
                           {language === 'fa' ? item.labelFa : item.labelEn}
                         </span>
-                        <span className={`font-semibold ${statusClass}`}>
+                        <span className={`font-bold ${statusClass}`}>
                           {language === 'fa' ? statusLabelFa : statusLabelEn}
                         </span>
                       </div>
@@ -652,19 +664,19 @@ const personalityTraitsList = useMemo(() => {
         {sections.map((section) => (
           <section
             key={section.title}
-            className={`rounded-[20px] border ${
+            className={`rounded-[2rem] border-2 ${
               section.highlight
-                ? 'border-[#d9defa] bg-gradient-to-br from-[#f6f6ff] to-white shadow-[0px_18px_45px_-25px_rgba(26,37,162,0.35)]'
-                : 'border-gray-100 bg-white shadow-[0px_12px_30px_-25px_rgba(26,37,162,0.25)]'
+                ? 'border-ink bg-gradient-to-br from-concrete-dark to-white shadow-[4px_4px_0px_0px_#1a1a1a]'
+                : 'border-ink bg-white dark:bg-concrete-dark dark:bg-concrete shadow-[4px_4px_0px_0px_#1a1a1a]'
             } p-6 space-y-6`}
           >
             <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center rounded-full bg-[#f1f2ff] w-12 h-12">
+              <div className="flex items-center justify-center rounded-full bg-moss/20 border-2 border-ink w-12 h-12">
                 {section.icon}
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{section.title}</h2>
-                <p className="text-sm text-gray-500">{section.description}</p>
+                <h2 className="text-lg font-display text-ink">{section.title}</h2>
+                <p className="text-sm text-ink/70 font-body">{section.description}</p>
               </div>
             </div>
 
@@ -672,36 +684,36 @@ const personalityTraitsList = useMemo(() => {
               {section.fields.map((field) => (
                 <div
                   key={field.label}
-                  className="rounded-[16px] border border-gray-100 bg-gray-50/60 px-4 py-3"
+                  className="rounded-xl border-2 border-ink bg-concrete-dark dark:bg-concrete px-4 py-3"
                 >
-                  <p className="text-xs font-medium text-gray-500 mb-1">{field.label}</p>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-xs font-bold text-ink/70 font-body mb-1">{field.label}</p>
+                  <p className="text-sm font-display text-ink">
                     {field.value}
                   </p>
                   {field.helper && (
-                    <p className="text-xs text-gray-400 mt-1">{field.helper}</p>
+                    <p className="text-xs text-ink/60 font-body mt-1">{field.helper}</p>
                   )}
                 </div>
               ))}
             </div>
             {section.footer && (
-              <div className="rounded-[16px] border border-gray-100 bg-gray-50/70 px-4 py-3 text-xs text-gray-500">
+              <div className="rounded-xl border-2 border-ink bg-concrete-dark dark:bg-concrete px-4 py-3 text-xs text-ink/70 font-body">
                 {section.footer}
               </div>
             )}
           </section>
         ))}
 
-        <section className="rounded-[20px] border border-gray-100 bg-white shadow-[0px_12px_30px_-25px_rgba(26,37,162,0.25)] p-6 space-y-6">
+        <section className="rounded-[2rem] border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete shadow-[4px_4px_0px_0px_#1a1a1a] p-6 space-y-6">
           <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center rounded-full bg-[#f1f2ff] w-12 h-12">
-              <Languages className="w-5 h-5 text-[#1a25a2]" />
+            <div className="flex items-center justify-center rounded-full bg-moss/20 border-2 border-ink w-12 h-12">
+              <Languages className="w-5 h-5 text-moss" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-display text-ink">
                 {language === 'fa' ? 'زبان‌ها' : 'Languages'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink/70 font-body">
                 {language === 'fa'
                   ? 'زبان‌هایی که در پروفایل خود ثبت کرده‌اید.'
                   : 'Languages you have listed on your profile.'}
@@ -709,7 +721,7 @@ const personalityTraitsList = useMemo(() => {
             </div>
           </div>
           {parsedLanguages.length === 0 ? (
-            <div className="rounded-[16px] border border-dashed border-gray-200 bg-gray-50/70 px-4 py-6 text-sm text-gray-500 text-center">
+            <div className="rounded-xl border-2 border-dashed border-ink/30 bg-concrete-dark dark:bg-concrete px-4 py-6 text-sm text-ink/70 text-center font-body">
               {language === 'fa'
                 ? 'هنوز زبانی ثبت نشده است.'
                 : 'No languages have been added yet.'}
@@ -719,14 +731,14 @@ const personalityTraitsList = useMemo(() => {
               {parsedLanguages.map((lang, index) => (
                 <div
                   key={`${lang.name}-${index}`}
-                  className="rounded-[16px] border border-gray-100 bg-gray-50/60 px-4 py-3 space-y-2"
+                  className="rounded-xl border-2 border-ink bg-concrete-dark dark:bg-concrete px-4 py-3 space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-display text-ink">
                       {language === 'fa' ? toPersianNum(lang.name) : lang.name}
                     </span>
                     {lang.level && (
-                      <span className="text-xs font-medium text-[#1a25a2]">
+                      <span className="text-xs font-bold text-moss">
                         {language === 'fa'
                           ? languageLevelLabels[lang.level]?.fa || lang.level
                           : languageLevelLabels[lang.level]?.en || lang.level}
@@ -734,9 +746,9 @@ const personalityTraitsList = useMemo(() => {
                     )}
                   </div>
                   {lang.level && (
-                    <div className="h-1.5 rounded-full bg-white overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-white dark:bg-concrete-dark dark:bg-concrete border border-ink overflow-hidden">
                       <div
-                        className="h-full bg-[#1a25a2] transition-all"
+                        className="h-full bg-moss transition-all"
                         style={{
                           width:
                             lang.level === 'native'
@@ -757,36 +769,36 @@ const personalityTraitsList = useMemo(() => {
           <div className="flex justify-end">
             <Link
               href="/profile/edit#personal-info"
-              className="inline-flex items-center gap-2 rounded-full border border-[#1a25a2] px-4 py-1.5 text-xs font-medium text-[#1a25a2] hover:bg-[#1a25a2]/5 transition"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-ink px-4 py-1.5 text-xs font-bold text-ink hover:bg-concrete-dark dark:bg-concrete transition-all"
             >
               {language === 'fa' ? 'مدیریت زبان‌ها' : 'Manage languages'}
             </Link>
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-gray-100 bg-white shadow-[0px_12px_30px_-25px_rgba(26,37,162,0.25)] p-6 space-y-4">
+        <section className="rounded-[2rem] border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete shadow-[4px_4px_0px_0px_#1a1a1a] p-6 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center rounded-full bg-[#f1f2ff] w-12 h-12">
-              <UserCircle className="w-5 h-5 text-[#1a25a2]" />
+            <div className="flex items-center justify-center rounded-full bg-moss/20 border-2 border-ink w-12 h-12">
+              <UserCircle className="w-5 h-5 text-moss" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-display text-ink">
                 {language === 'fa' ? 'درباره من' : 'About me'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink/70 font-body">
                 {language === 'fa'
                   ? 'متنی که در بخش معرفی شما نمایش داده می‌شود.'
                   : 'This text appears in your public profile summary.'}
               </p>
             </div>
           </div>
-          <div className="rounded-[16px] border border-gray-100 bg-gray-50/60 px-4 py-4 text-sm leading-6 text-gray-700">
+          <div className="rounded-xl border-2 border-ink bg-concrete-dark dark:bg-concrete px-4 py-4 text-sm leading-6 text-ink font-body">
             {aboutMeText && aboutMeText.trim().length > 0 ? (
               <p className="whitespace-pre-line">
                 {language === 'fa' ? toPersianNum(aboutMeText) : aboutMeText}
               </p>
             ) : (
-              <span className="text-gray-500">
+              <span className="text-ink/70">
                 {language === 'fa'
                   ? 'هنوز توضیحی برای معرفی خود ثبت نکرده‌اید.'
                   : 'You have not added an introduction yet.'}
@@ -798,7 +810,7 @@ const personalityTraitsList = useMemo(() => {
               {personalityTraitsList.map((trait) => (
                 <span
                   key={trait}
-                  className="inline-flex items-center rounded-full bg-[#f3f4ff] px-3 py-1 text-xs font-medium text-[#1a25a2]"
+                  className="inline-flex items-center rounded-full bg-moss/20 border-2 border-moss px-3 py-1 text-xs font-bold text-moss"
                 >
                   {language === 'fa' ? toPersianNum(trait) : trait}
                 </span>
@@ -807,16 +819,16 @@ const personalityTraitsList = useMemo(() => {
           )}
         </section>
 
-        <section className="rounded-[20px] border border-gray-100 bg-white shadow-[0px_12px_30px_-25px_rgba(26,37,162,0.25)] p-6 space-y-6">
+        <section className="rounded-[2rem] border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete shadow-[4px_4px_0px_0px_#1a1a1a] p-6 space-y-6">
           <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center rounded-full bg-[#f1f2ff] w-12 h-12">
-              <FileText className="w-5 h-5 text-[#1a25a2]" />
+            <div className="flex items-center justify-center rounded-full bg-moss/20 border-2 border-ink w-12 h-12">
+              <FileText className="w-5 h-5 text-moss" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-display text-ink">
                 {language === 'fa' ? 'مدارک و اسناد' : 'Documents'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink/70 font-body">
                 {language === 'fa'
                   ? 'وضعیت مدارک بارگذاری شده در پروفایل شما.'
                   : 'Status of the documents you have uploaded.'}
@@ -830,24 +842,24 @@ const personalityTraitsList = useMemo(() => {
               return (
                 <div
                   key={docDef.key}
-                  className={`rounded-[16px] border p-4 space-y-3 ${
-                    isUploaded ? 'border-[#00d4aa]/40 bg-[#00d4aa]/5' : 'border-gray-200 bg-gray-50'
+                  className={`rounded-xl border-2 p-4 space-y-3 ${
+                    isUploaded ? 'border-moss bg-moss/10 shadow-[2px_2px_0px_0px_#4a5d23]' : 'border-ink bg-concrete-dark dark:bg-concrete'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <h3 className="text-sm font-display text-ink">
                         {language === 'fa' ? docDef.labelFa : docDef.labelEn}
                       </h3>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-ink/70 font-body">
                         {language === 'fa' ? docDef.helperFa : docDef.helperEn}
                       </p>
                     </div>
                     <span
-                      className={`inline-flex h-6 items-center rounded-full px-2 text-xs font-medium ${
+                      className={`inline-flex h-6 items-center rounded-full px-2 text-xs font-bold border-2 ${
                         isUploaded
-                          ? 'bg-[#00d4aa]/20 text-[#0f766e]'
-                          : 'bg-gray-200 text-gray-600'
+                          ? 'bg-moss/20 text-moss border-moss'
+                          : 'bg-concrete text-ink/60 border-ink/30'
                       }`}
                     >
                       {isUploaded
@@ -861,10 +873,10 @@ const personalityTraitsList = useMemo(() => {
                   </div>
                   {isUploaded ? (
                     <div className="space-y-2">
-                      <div className="rounded-lg bg-white/80 border border-white px-3 py-2 text-xs text-gray-600">
-                        <p className="font-medium text-gray-800">{doc?.fileName || 'document.pdf'}</p>
+                      <div className="rounded-lg bg-white dark:bg-concrete-dark dark:bg-concrete border-2 border-ink px-3 py-2 text-xs text-ink shadow-[2px_2px_0px_0px_#1a1a1a]">
+                        <p className="font-bold text-ink font-body">{doc?.fileName || 'document.pdf'}</p>
                         {doc?.uploadedAt && (
-                          <p className="mt-1">
+                          <p className="mt-1 font-body">
                             {language === 'fa'
                               ? `تاریخ بارگذاری: ${toPersianNum(
                                   new Date(doc.uploadedAt).toLocaleDateString('fa-IR'),
@@ -876,13 +888,13 @@ const personalityTraitsList = useMemo(() => {
                       <button
                         type="button"
                         onClick={() => handleDocumentDownload(doc)}
-                        className="inline-flex items-center rounded-full border border-[#1a25a2] px-3 py-1.5 text-xs font-medium text-[#1a25a2] hover:bg-[#1a25a2]/5 transition"
+                        className="inline-flex items-center rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold text-ink hover:bg-concrete-dark dark:bg-concrete transition-all"
                       >
                         {language === 'fa' ? 'دانلود' : 'Download'}
                       </button>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-ink/70 font-body">
                       {language === 'fa'
                         ? 'هنوز مدرکی برای این بخش بارگذاری نشده است.'
                         : 'No document has been uploaded for this category.'}
@@ -892,7 +904,7 @@ const personalityTraitsList = useMemo(() => {
               );
             })}
           </div>
-          <div className="flex flex-col gap-2 text-xs text-gray-500 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-2 text-xs text-ink/70 font-body md:flex-row md:items-center md:justify-between">
             <span>
               {language === 'fa'
                 ? 'برای افزودن یا به‌روزرسانی مدارک از صفحه ویرایش پروفایل اقدام کنید.'
@@ -900,23 +912,23 @@ const personalityTraitsList = useMemo(() => {
             </span>
             <Link
               href="/profile/edit#personal-info"
-              className="inline-flex items-center gap-2 rounded-full border border-[#1a25a2] px-4 py-1.5 font-medium text-[#1a25a2] hover:bg-[#1a25a2]/5 transition"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-ink px-4 py-1.5 font-bold text-ink hover:bg-concrete-dark dark:bg-concrete transition-all"
             >
               {language === 'fa' ? 'مدیریت مدارک' : 'Manage documents'}
             </Link>
           </div>
         </section>
 
-        <aside className="rounded-[20px] border border-dashed border-[#d1d5dc] bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <aside className="rounded-[2rem] border-2 border-dashed border-ink bg-white dark:bg-concrete-dark dark:bg-concrete p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-[4px_4px_0px_0px_#1a1a1a]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center rounded-full bg-[#f3f4ff] w-12 h-12 text-[#1a25a2]">
+            <div className="flex items-center justify-center rounded-full bg-safety/20 border-2 border-ink w-12 h-12 text-safety">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-display text-ink">
                 {language === 'fa' ? 'اطلاعات شما کامل نیست' : 'Some details are missing'}
               </h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-ink/70 font-body">
                 {language === 'fa'
                   ? 'برای دریافت سریع‌تر پرداخت‌ها، لطفاً اطلاعات شخصی و بانکی را تکمیل کنید.'
                   : 'Complete your personal and banking details to ensure timely payouts.'}
@@ -925,7 +937,7 @@ const personalityTraitsList = useMemo(() => {
           </div>
           <Link
             href="/profile/edit#personal-info"
-            className="inline-flex items-center justify-center rounded-full bg-[#1a25a2] px-5 py-2 text-sm font-medium text-white hover:bg-[#161c85] transition"
+            className="inline-flex items-center justify-center rounded-xl bg-ink text-concrete border-2 border-ink px-5 py-2 text-sm font-bold hover:bg-safety hover:text-ink hover:shadow-[2px_2px_0px_0px_#1a1a1a] transition-all"
           >
             {language === 'fa' ? 'تکمیل اطلاعات' : 'Update details'}
           </Link>

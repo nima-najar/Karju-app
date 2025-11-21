@@ -363,10 +363,10 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center">
+      <div className="min-h-screen bg-concrete flex items-center justify-center pt-24">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-          <p className="text-primary-700 mt-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-ink" />
+          <p className="text-ink font-bold mt-4">
             {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
           </p>
         </div>
@@ -477,15 +477,15 @@ export default function ProfilePage() {
   if (user.userType !== 'worker') {
     return (
       <div
-        className="min-h-screen bg-[#f9f9f9]"
+        className="min-h-screen bg-concrete pt-24"
         dir={language === 'fa' ? 'rtl' : 'ltr'}
       >
         <div className="max-w-3xl mx-auto px-8 py-16 space-y-6">
-          <div className="bg-white rounded-[30px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-10 text-center">
-            <h1 className="text-2xl font-bold text-neutral-900 mb-3">
+          <div className="bg-white border-2 border-ink rounded-[30px] shadow-[4px_4px_0px_0px_#1a1a1a] p-10 text-center">
+            <h1 className="text-2xl font-bold text-ink mb-3 font-display">
               {language === 'fa' ? 'پروفایل کسب‌وکار' : 'Business Profile'}
             </h1>
-            <p className="text-neutral-600">
+            <p className="text-ink/70 font-body">
               {language === 'fa'
                 ? 'نمای کامل پروفایل کسب‌وکار به‌زودی در دسترس قرار می‌گیرد. برای ویرایش اطلاعات از گزینه زیر استفاده کنید.'
                 : 'A dedicated business profile experience is coming soon. Use the button below to manage your information.'}
@@ -493,14 +493,14 @@ export default function ProfilePage() {
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <Link
                 href="/profile/edit"
-                className="inline-flex items-center gap-2 rounded-[10px] bg-primary-600 px-5 py-3 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl bg-ink text-white border-2 border-ink px-5 py-3 text-sm font-bold hover:bg-safety hover:text-black hover:shadow-[4px_4px_0px_0px_#1a1a1a] transition-all"
               >
                 <Edit className="w-4 h-4" />
                 {language === 'fa' ? 'ویرایش پروفایل' : 'Edit Profile'}
               </Link>
               <Link
                 href="/admin/shifts"
-                className="inline-flex items-center gap-2 rounded-[10px] border border-primary-200 px-5 py-3 text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-ink px-5 py-3 text-sm font-bold text-ink hover:bg-concrete-dark transition-all"
               >
                 <Coins className="w-4 h-4" />
                 {language === 'fa' ? 'مدیریت شیفت‌ها' : 'Manage Shifts'}
@@ -530,14 +530,14 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f9f9f9] text-neutral-900"
+      className="min-h-screen bg-concrete dark:bg-ink text-ink dark:text-concrete pt-24"
       dir={language === 'fa' ? 'rtl' : 'ltr'}
     >
       <div className="max-w-[1229px] mx-auto px-8 pt-6 pb-8 space-y-6">
         <div className="flex justify-end" dir="ltr">
-          <div className="flex items-center gap-2 text-neutral-900">
+          <div className="flex items-center gap-2 text-ink">
             <h1
-              className={`text-lg font-bold ${
+              className={`text-lg font-bold font-display ${
                 language === 'fa' ? 'text-right' : ''
               }`}
             >
@@ -546,17 +546,17 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => router.push('/shifts')}
-              className="inline-flex items-center justify-center rounded-full size-8 border border-gray-300 hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center justify-center rounded-full size-8 border-2 border-ink hover:bg-concrete-dark transition-all"
               aria-label={language === 'fa' ? 'رفتن به شیفت‌ها' : 'Go to shifts'}
             >
-              <ArrowRight className={`w-4 h-4 text-primary-600 ${language === 'fa' ? '' : 'rotate-180'}`} />
+              <ArrowRight className={`w-4 h-4 text-ink ${language === 'fa' ? '' : 'rotate-180'}`} />
             </button>
           </div>
         </div>
         <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="w-full max-w-[380px] bg-white rounded-[30px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-6 space-y-6">
+          <aside className="w-full max-w-[380px] bg-white border-2 border-ink rounded-[30px] shadow-[4px_4px_0px_0px_#1a1a1a] p-6 space-y-6">
           <div className="space-y-4">
-            <div className="text-sm font-bold">
+            <div className="text-sm font-bold text-ink font-display">
               {language === 'fa' ? 'تنظیمات' : 'Settings'}
             </div>
             <div className="space-y-3">
@@ -564,18 +564,18 @@ export default function ProfilePage() {
                 <Link
                   key={label}
                   href={href}
-                  className="flex items-center justify-between h-[72px] rounded-[14px] px-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between h-[72px] rounded-[14px] px-4 border-2 border-transparent hover:border-ink hover:bg-concrete-dark transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="size-10 rounded-full bg-[rgba(26,37,162,0.1)] flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-[#1a25a2]" />
+                    <span className="size-10 rounded-full bg-moss/20 border-2 border-ink flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-moss" />
                     </span>
                     <div className="text-sm">
-                      <div className="font-semibold">{label}</div>
-                      <div className="text-xs text-neutral-500">{helper}</div>
+                      <div className="font-bold text-ink">{label}</div>
+                      <div className="text-xs text-ink/60">{helper}</div>
                     </div>
                   </div>
-                  <span className={`text-neutral-400 text-base ${language === 'fa' ? '' : 'rotate-180'}`}>
+                  <span className={`text-ink/40 text-base font-bold ${language === 'fa' ? '' : 'rotate-180'}`}>
                     ‹
                   </span>
                 </Link>
@@ -583,32 +583,32 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200/70 pt-4 space-y-4">
-            <div className="text-sm font-bold opacity-70">
+          <div className="border-t-2 border-ink/20 pt-4 space-y-4">
+            <div className="text-sm font-bold text-ink/70 font-display">
               {language === 'fa' ? 'اطلاعات حساب' : 'Account Information'}
             </div>
             <div className="space-y-4 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-neutral-400">
+                <span className="text-ink/60 font-bold">
                   {language === 'fa' ? 'ایمیل' : 'Email'}
                 </span>
-                <span className="text-neutral-900 break-words">
+                <span className="text-ink break-words font-bold">
                   {user.email}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-neutral-400">
+                <span className="text-ink/60 font-bold">
                   {language === 'fa' ? 'تلفن' : 'Phone'}
                 </span>
-                <span className="text-neutral-900">
+                <span className="text-ink font-bold">
                   {language === 'fa' ? toPersianNum(phone) : phone}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-neutral-400">
+                <span className="text-ink/60 font-bold">
                   {language === 'fa' ? 'عضویت از' : 'Member Since'}
                 </span>
-                <span className="text-neutral-900">
+                <span className="text-ink font-bold">
                   {language === 'fa'
                     ? `${toPersianNum(memberSinceJd)} ${jalaliMonthNamesFa[memberSinceJm - 1]} ${toPersianNum(memberSinceJy)}`
                     : format(memberSinceDate, 'MMM dd, yyyy')}
@@ -617,14 +617,14 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200/70 pt-4">
+          <div className="border-t-2 border-ink/20 pt-4">
             <button
               type="button"
               onClick={() => {
                 logout();
                 router.push('/login');
               }}
-              className="w-full text-left text-sm font-bold text-[#e7000b] hover:text-[#c10009] transition-colors"
+              className="w-full text-left text-sm font-bold text-red-600 hover:text-red-700 hover:underline transition-colors"
             >
               {language === 'fa' ? 'خروج از حساب کاربری' : 'Log out'}
             </button>
@@ -632,7 +632,7 @@ export default function ProfilePage() {
         </aside>
 
         <main className="flex-1 space-y-6">
-          <section className="bg-gradient-to-b from-[#1a25a2] to-[#b16ff8] rounded-[30px] text-white p-8">
+          <section className="bg-gradient-to-b from-ink to-moss border-2 border-ink rounded-[30px] text-concrete p-8 shadow-[4px_4px_0px_0px_#1a1a1a]">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
               <div className="flex-1">
                 <div className="relative size-[120px] mb-6">
@@ -649,7 +649,7 @@ export default function ProfilePage() {
                   )}
                   <Link
                     href="/profile/edit"
-                    className="absolute bottom-2 left-2 size-10 rounded-full bg-white text-primary-600 flex items-center justify-center shadow-lg hover:bg-primary-50 transition"
+                    className="absolute bottom-2 left-2 size-10 rounded-full bg-white dark:bg-concrete-dark border-2 border-ink dark:border-concrete text-ink dark:text-concrete flex items-center justify-center shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9] hover:bg-concrete-dark dark:hover:bg-concrete transition-all"
                     aria-label={language === 'fa' ? 'ویرایش تصویر' : 'Edit photo'}
                   >
                     <Edit className="w-5 h-5" />
@@ -676,30 +676,30 @@ export default function ProfilePage() {
                   {statsCards.map((card) => (
                     <div
                       key={card.label}
-                      className="rounded-[20px] bg-white/10 px-4 py-4 text-center"
+                      className="rounded-[20px] bg-white/20 border-2 border-concrete/30 px-4 py-4 text-center"
                     >
-                      <div className="text-xl font-bold">{card.value}</div>
-                      <div className="text-xs text-white/80">{card.label}</div>
+                      <div className="text-xl font-bold font-display">{card.value}</div>
+                      <div className="text-xs text-concrete/90 font-bold">{card.label}</div>
                     </div>
                   ))}
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-[20px] bg-white/15 px-4 py-4">
-                    <div className="text-xs text-white/80">
+                  <div className="rounded-[20px] bg-white/20 border-2 border-concrete/30 px-4 py-4">
+                    <div className="text-xs text-concrete/90 font-bold">
                       {language === 'fa' ? 'درآمد کل' : 'Total Earnings'}
                     </div>
-                    <div className="text-lg font-bold mt-2">
+                    <div className="text-lg font-bold mt-2 font-display">
                       {formatPersianCurrency(totalEarnings).replace(
                         language === 'fa' ? '' : ' ریال',
                         language === 'fa' ? '' : ' IRR',
                       )}
                     </div>
                   </div>
-                  <div className="rounded-[20px] bg-white/15 px-4 py-4">
-                    <div className="text-xs text-white/80">
+                  <div className="rounded-[20px] bg-white/20 border-2 border-concrete/30 px-4 py-4">
+                    <div className="text-xs text-concrete/90 font-bold">
                       {language === 'fa' ? 'درآمد این ماه' : 'This Month'}
                     </div>
-                    <div className="text-lg font-bold mt-2">
+                    <div className="text-lg font-bold mt-2 font-display">
                       {formatPersianCurrency(monthEarnings).replace(
                         language === 'fa' ? '' : ' ریال',
                         language === 'fa' ? '' : ' IRR',
@@ -715,7 +715,7 @@ export default function ProfilePage() {
                 {profile.skills.slice(0, 6).map((skill: string) => (
                   <span
                     key={skill}
-                    className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white/90"
+                    className="rounded-full bg-white/30 border border-concrete/50 px-3 py-1 text-xs font-bold text-concrete"
                   >
                     {skill}
                   </span>
@@ -724,10 +724,10 @@ export default function ProfilePage() {
             )}
           </section>
 
-          <section className="bg-white rounded-[30px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-6 space-y-6">
+          <section className="bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete rounded-[30px] shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9] p-6 space-y-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-lg font-bold">
+                <h3 className="text-lg font-bold text-ink dark:text-ink font-display">
                   {language === 'fa' ? 'موجودیت' : 'Availability'}
                 </h3>
               </div>
@@ -735,7 +735,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={handlePreviousMonth}
-                  className="inline-flex items-center justify-center rounded-[10px] border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center rounded-xl border-2 border-ink dark:border-concrete px-3 py-2 text-sm font-bold text-ink dark:text-ink hover:bg-concrete-dark dark:hover:bg-concrete transition-all"
                   aria-label={language === 'fa' ? 'ماه قبل' : 'Previous month'}
                 >
                   {language === 'fa' ? '‹' : '›'}
@@ -743,12 +743,12 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={handleNextMonth}
-                  className="inline-flex items-center justify-center rounded-[10px] bg-[#f3f3f5] px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-[#e7e7ef] transition-colors"
+                  className="inline-flex items-center justify-center rounded-xl bg-concrete-dark dark:bg-concrete-light border-2 border-ink dark:border-concrete px-4 py-2 text-sm font-bold text-ink dark:text-ink hover:bg-concrete dark:hover:bg-concrete transition-all"
                   aria-label={language === 'fa' ? 'ماه بعد' : 'Next month'}
                 >
                   {monthNames[(calendarState.month + 11) % 12]}
                 </button>
-                <div className="inline-flex items-center justify-center rounded-[10px] bg-[#f3f3f5] px-4 py-2 text-sm font-medium text-neutral-900">
+                <div className="inline-flex items-center justify-center rounded-xl bg-concrete-dark dark:bg-concrete-light border-2 border-ink dark:border-concrete px-4 py-2 text-sm font-bold text-ink dark:text-ink">
                   {language === 'fa'
                     ? toPersianNum(calendarState.year)
                     : calendarState.year}
@@ -756,7 +756,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={handleResetToToday}
-                  className="inline-flex items-center justify-center rounded-[10px] border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center rounded-xl border-2 border-ink dark:border-concrete px-4 py-2 text-sm font-bold text-ink dark:text-ink hover:bg-concrete-dark dark:hover:bg-concrete transition-all"
                 >
                   {language === 'fa' ? 'امروز' : 'Today'}
                 </button>
@@ -764,7 +764,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-7 gap-2 text-center text-xs text-neutral-500">
+              <div className="grid grid-cols-7 gap-2 text-center text-xs text-ink/70 dark:text-ink/80 font-bold">
                 {weekdayNames.map((label) => (
                   <span key={label}>{label}</span>
                 ))}
@@ -780,15 +780,15 @@ export default function ProfilePage() {
                     day.jalaliDay === todayJalali.jd;
 
                   const baseClasses =
-                    'h-[42px] rounded-[10px] flex items-center justify-center text-sm transition-colors';
+                    'h-[42px] rounded-lg flex items-center justify-center text-sm transition-all font-bold border-2';
 
                   const stateClasses = isHighlighted
-                    ? 'bg-[rgba(60,224,0,0.45)] text-neutral-900'
+                    ? 'bg-moss text-concrete border-ink shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]'
                     : isToday
-                    ? 'border border-gray-200 text-neutral-900 bg-white'
+                    ? 'border-2 border-safety text-ink dark:text-ink bg-concrete-dark dark:bg-concrete-light'
                     : day.isCurrentMonth
-                    ? 'bg-white text-neutral-900'
-                    : 'bg-white text-neutral-400 opacity-60';
+                    ? 'bg-white dark:bg-concrete-light text-ink dark:text-ink border-ink dark:border-concrete hover:bg-concrete-dark dark:hover:bg-concrete'
+                    : 'bg-concrete dark:bg-concrete text-ink/40 dark:text-ink/50 border-ink/30 dark:border-concrete/30 opacity-60';
 
                   return (
                     <button
@@ -796,7 +796,7 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => day.isCurrentMonth && openAvailabilityModal(day)}
                       className={`${baseClasses} ${stateClasses} ${
-                        day.isCurrentMonth ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500' : 'cursor-default'
+                        day.isCurrentMonth ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-safety' : 'cursor-default'
                       }`}
                       disabled={!day.isCurrentMonth}
                     >
@@ -807,13 +807,13 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 flex items-center justify-end gap-6 text-xs text-neutral-500">
+            <div className="border-t-2 border-ink/20 dark:border-ink/30 pt-4 flex items-center justify-end gap-6 text-xs text-ink/70 dark:text-ink/80 font-bold">
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-[rgba(60,224,0,0.45)]" />
+                <span className="size-3 rounded-full bg-moss border border-ink" />
                 <span>{language === 'fa' ? 'موجود' : 'Available'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-gray-300" />
+                <span className="size-3 rounded-full bg-concrete-dark dark:bg-concrete-light border-2 border-ink dark:border-concrete" />
                 <span>{language === 'fa' ? 'غیرموجود' : 'Unavailable'}</span>
               </div>
             </div>
@@ -825,38 +825,38 @@ export default function ProfilePage() {
     {availabilityModal && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
         <div
-          className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-[0px_20px_45px_-20px_rgba(26,37,162,0.35)]"
+          className="w-full max-w-md rounded-[28px] bg-white border-2 border-ink p-6 shadow-[8px_8px_0px_0px_#1a1a1a]"
           dir={language === 'fa' ? 'rtl' : 'ltr'}
         >
           <div className="flex items-start justify-between mb-4">
             <button
               type="button"
               onClick={closeAvailabilityModal}
-              className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 transition-colors"
+              className="rounded-full border-2 border-ink p-2 text-ink hover:bg-concrete-dark transition-all"
               aria-label={language === 'fa' ? 'بستن' : 'Close'}
             >
               <X className="w-4 h-4" />
             </button>
             <div className="flex-1 text-center px-2">
-              <h2 className="text-base font-semibold text-neutral-900">
+              <h2 className="text-base font-bold text-ink font-display">
                 {language === 'fa'
                   ? `انتخاب ساعات موجودیت برای ${availabilityModalTitle}`
                   : `Set availability for ${availabilityModalTitle}`}
               </h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-1 text-sm text-ink/70 font-bold">
                 {language === 'fa'
                   ? 'بازه زمانی موجودیت خود را مشخص کنید'
                   : 'Choose the time window you are available'}
               </p>
             </div>
-            <div className="rounded-full bg-gray-100 p-2 text-primary-600">
+            <div className="rounded-full bg-concrete-dark border-2 border-ink p-2 text-moss">
               <Clock className="w-4 h-4" />
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm font-medium text-neutral-600">
+              <label className="flex flex-col gap-2 text-sm font-bold text-ink">
                 {language === 'fa' ? 'از ساعت:' : 'From'}
                 <select
                   value={availabilityModal.start}
@@ -865,7 +865,7 @@ export default function ProfilePage() {
                       prev ? { ...prev, start: event.target.value } : prev,
                     )
                   }
-                  className="h-12 rounded-[12px] border border-gray-200 bg-gray-50 px-3 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="h-12 rounded-xl border-2 border-ink dark:border-concrete bg-white dark:bg-concrete-dark px-3 text-ink dark:text-concrete focus:border-safety focus:outline-none focus:ring-2 focus:ring-safety font-body"
                 >
                   {timeOptions.map((time) => (
                     <option key={time} value={time}>
@@ -874,7 +874,7 @@ export default function ProfilePage() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-2 text-sm font-medium text-neutral-600">
+              <label className="flex flex-col gap-2 text-sm font-bold text-ink">
                 {language === 'fa' ? 'تا ساعت:' : 'To'}
                 <select
                   value={availabilityModal.end}
@@ -883,7 +883,7 @@ export default function ProfilePage() {
                       prev ? { ...prev, end: event.target.value } : prev,
                     )
                   }
-                  className="h-12 rounded-[12px] border border-gray-200 bg-gray-50 px-3 text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="h-12 rounded-xl border-2 border-ink dark:border-concrete bg-white dark:bg-concrete-dark px-3 text-ink dark:text-concrete focus:border-safety focus:outline-none focus:ring-2 focus:ring-safety font-body"
                 >
                   {timeOptions.map((time) => (
                     <option key={time} value={time}>
@@ -894,9 +894,9 @@ export default function ProfilePage() {
               </label>
             </div>
 
-            <div className="rounded-[16px] bg-gray-50 px-4 py-3 text-sm text-neutral-600">
+            <div className="rounded-xl bg-concrete-dark dark:bg-concrete border-2 border-ink dark:border-concrete px-4 py-3 text-sm text-ink dark:text-concrete font-bold">
               {language === 'fa' ? 'مدت زمان: ' : 'Duration: '}
-              <span className="font-semibold text-neutral-900">
+              <span className="font-display">
                 {modalDurationLabel}
               </span>
             </div>
@@ -905,21 +905,21 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={markUnavailable}
-                className="rounded-[12px] border border-gray-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-100 transition-colors"
+                className="rounded-xl border-2 border-ink px-4 py-2 text-sm font-bold text-ink hover:bg-concrete-dark transition-all"
               >
                 {language === 'fa' ? 'ناموجود' : 'Unavailable'}
               </button>
               <button
                 type="button"
                 onClick={closeAvailabilityModal}
-                className="rounded-[12px] border border-gray-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-gray-100 transition-colors"
+                className="rounded-xl border-2 border-ink px-4 py-2 text-sm font-bold text-ink hover:bg-concrete-dark transition-all"
               >
                 {language === 'fa' ? 'انصراف' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={saveAvailability}
-                className="rounded-[12px] bg-gradient-to-r from-[#4e4be7] to-[#8a5cf6] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                className="rounded-xl bg-moss text-concrete border-2 border-ink px-4 py-2 text-sm font-bold hover:shadow-[2px_2px_0px_0px_#1a1a1a] transition-all"
               >
                 {language === 'fa' ? 'ذخیره' : 'Save'}
               </button>

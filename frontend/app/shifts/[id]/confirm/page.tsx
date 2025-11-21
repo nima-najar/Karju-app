@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AlertCircle, CalendarDays, CheckCircle2, Clock3, MapPin, Wallet } from 'lucide-react';
+import { AlertCircle, CalendarDays, CheckCircle2, Clock3, MapPin, Wallet, ArrowLeft, ArrowRight } from 'lucide-react';
 import { shiftsAPI, applicationsAPI } from '@/lib/api';
 import { getUser } from '@/lib/auth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatPersianNumber, formatPersianTime, gregorianToJalali, toPersianNum } from '@/lib/persianUtils';
 
 const fallbackRequirements = [
@@ -36,6 +37,12 @@ const agreementItems = [
 export default function ShiftConfirmationPage() {
   const params = useParams();
   const router = useRouter();
+  const { language } = useLanguage();
+  const isRTL = language === 'fa';
+  const backButtonClasses =
+    'inline-flex items-center justify-center w-14 h-14 rounded-full border-[3px] border-white/80 text-white bg-transparent hover:bg-white/10 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)]';
+  const cardClasses =
+    'rounded-[24px] border-2 border-ink dark:border-concrete bg-white dark:bg-concrete-dark shadow-[6px_6px_0px_0px_rgba(0,0,0,0.15)]';
   const [shift, setShift] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -130,16 +137,21 @@ export default function ShiftConfirmationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ff]">
-        <div className="text-center text-[#6b41e0]">در حال بارگذاری...</div>
+      <div className="min-h-screen bg-concrete dark:bg-ink flex items-center justify-center">
+        <div className="text-center text-ink dark:text-concrete space-y-4">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full border-4 border-ink/30 dark:border-concrete/40 border-t-ink dark:border-t-concrete animate-spin"></div>
+          <p className="font-display text-lg">{language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}</p>
+        </div>
       </div>
     );
   }
 
   if (!shift) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ff]">
-        <div className="text-center text-neutral-600">شیفت مورد نظر یافت نشد.</div>
+      <div className="min-h-screen bg-concrete dark:bg-ink flex items-center justify-center">
+        <div className="text-center text-ink dark:text-concrete font-display">
+          {language === 'fa' ? 'شیفت مورد نظر یافت نشد.' : 'Shift not found.'}
+        </div>
       </div>
     );
   }
@@ -147,146 +159,190 @@ export default function ShiftConfirmationPage() {
   const requirementList = shift.required_skills?.length ? shift.required_skills : fallbackRequirements;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#4c1fdc] pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="py-12 text-white space-y-2">
-          <p className="text-sm text-white/80">{shift.business_name || 'کسب‌وکار'} • {shift.industry || 'صنعت خدماتی'}</p>
-          <h1 className="text-3xl sm:text-4xl font-black">شما در حال درخواست برای ۱ شیفت هستید</h1>
-        </header>
-
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8 border border-[#ecebff]">
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="text-neutral-500 text-sm">نرخ ساعتی</div>
-                <div className="text-2xl font-black text-[#6b41e0]">
-                  {formatPersianNumber(Math.floor(shift.hourly_wage / 10).toLocaleString())} تومان
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="rounded-2xl bg-[#f8f6ff] p-4 border border-[#ece8ff]">
-                  <div className="flex items-center gap-2 text-sm text-neutral-500 mb-2">
-                    <CalendarDays className="w-4 h-4 text-[#6b41e0]" />
-                    زمان شیفت
-                  </div>
-                  <div className="font-semibold text-neutral-900">
-                    {formattedDate} • {formatPersianTime(shift.start_time)} تا {formatPersianTime(shift.end_time)}
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-[#f8f6ff] p-4 border border-[#ece8ff]">
-                  <div className="flex items-center gap-2 text-sm text-neutral-500 mb-2">
-                    <Clock3 className="w-4 h-4 text-[#6b41e0]" />
-                    لغو شیفت
-                  </div>
-                  <div className="font-semibold text-neutral-900">
-                    {shift.cancellation_deadline_hours || 48} ساعت قبل از شروع
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-[#f8f6ff] p-4 border border-[#ece8ff]">
-                  <div className="flex items-center gap-2 text-sm text-neutral-500 mb-2">
-                    <Wallet className="w-4 h-4 text-[#6b41e0]" />
-                    درآمد کل
-                  </div>
-                  <div className="font-semibold text-neutral-900">{formatPersianNumber(totalIncome.toLocaleString())} تومان</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <section className="bg-white rounded-3xl shadow-xl border border-[#ecebff] p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-neutral-900">شرایط و مهارت‌های مورد نیاز</h2>
-                <p className="text-sm text-neutral-500">لطفاً تأیید کنید که تمام موارد زیر را دارید.</p>
-              </div>
-              <CheckCircle2 className={`w-6 h-6 ${allRequirementsChecked ? 'text-[#4caf50]' : 'text-neutral-300'}`} />
-            </div>
-
-            <div className="space-y-4">
-              {requirementList.map((item) => (
-                <label
-                  key={item}
-                  className={`flex items-center gap-4 rounded-2xl border p-4 cursor-pointer transition ${
-                    requirementsState[item] ? 'border-[#6b41e0] bg-[#f7f4ff]' : 'border-[#e5e5f5] bg-[#fbfbff]'
-                  }`}
+    <div
+      className="min-h-screen bg-concrete dark:bg-ink text-ink dark:text-concrete pt-28 pb-16"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
+      <div className="bg-gradient-to-b from-ink to-moss text-concrete border-b-4 border-safety">
+        <div className="max-w-5xl mx-auto px-6 py-10 space-y-4">
+          <div className={`flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className="space-y-2">
+              <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+                <h1 className="text-3xl font-display text-white">
+                  {language === 'fa' ? 'تأیید درخواست شیفت' : 'Confirm Shift Request'}
+                </h1>
+                <Link
+                  href={`/shifts/${shift.id}`}
+                  className={backButtonClasses}
+                  aria-label={language === 'fa' ? 'بازگشت به جزئیات شیفت' : 'Back to shift'}
                 >
-                  <input
-                    type="checkbox"
-                    checked={requirementsState[item] || false}
-                    onChange={() => handleRequirementToggle(item)}
-                    className="w-5 h-5 rounded border-[#d4d1ff] text-[#6b41e0] focus:ring-[#6b41e0]"
-                  />
-                  <span className="text-sm text-neutral-700">{item}</span>
-                </label>
-              ))}
-            </div>
-
-            {!allRequirementsChecked && (
-              <div className="flex items-center gap-2 text-sm text-[#c67b1f] bg-[#fff6e4] border border-[#ffd9a4] rounded-2xl px-4 py-3">
-                <AlertCircle className="w-4 h-4" />
-                لطفاً تمام موارد بالا را تأیید کنید تا بتوانید ادامه دهید.
+                  {isRTL ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
+                </Link>
               </div>
-            )}
-          </section>
-
-          <section className="bg-white rounded-3xl shadow-xl border border-[#ecebff] p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-neutral-900">قوانین و مقررات</h2>
-              <MapPin className="w-5 h-5 text-[#6b41e0]" />
-            </div>
-            <div className="space-y-4">
-              {agreementItems.map((item) => (
-                <label
-                  key={item.id}
-                  className={`flex items-center gap-4 rounded-2xl border p-4 cursor-pointer transition ${
-                    agreementsState[item.id] ? 'border-[#6b41e0] bg-[#f7f4ff]' : 'border-[#e5e5f5] bg-[#fbfbff]'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={agreementsState[item.id] || false}
-                    onChange={() => handleAgreementToggle(item.id)}
-                    className="w-5 h-5 rounded border-[#d4d1ff] text-[#6b41e0] focus:ring-[#6b41e0]"
-                  />
-                  <span className="text-sm text-neutral-700">
-                    {item.textBefore}
-                    <Link href={item.link} className="text-[#6b41e0] font-semibold hover:text-[#4d27b6]" target="_blank">
-                      {item.linkText}
-                    </Link>
-                    {item.textAfter}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            {!allAgreementsChecked && (
-              <div className="flex items-start gap-3 text-xs text-[#c67b1f] bg-[#fff6e4] border border-[#ffd9a4] rounded-2xl px-4 py-3">
-                <AlertCircle className="w-4 h-4 mt-0.5" />
-                <p>برای ثبت درخواست، لازم است با شرایط و سیاست‌های کارجو موافقت کنید.</p>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3 text-xs text-white bg-[#6b41e0] rounded-2xl px-4 py-3">
-              <AlertCircle className="w-4 h-4 text-white mt-0.5" />
-              <p>
-                با ثبت درخواست، شما متعهد می‌شوید که در زمان مشخص شده حاضر شوید. در صورت لغو شیفت کمتر از{' '}
-                {shift.cancellation_deadline_hours || 48} ساعت قبل از شروع، ممکن است امتیاز شما کاهش یابد.
+              <p className="text-white/80 font-body">
+                {language === 'fa'
+                  ? `${shift.business_name || 'کسب‌وکار'} • ${shift.industry || 'صنعت خدماتی'}`
+                  : `${shift.business_name || 'Business'} • ${shift.industry || 'Service industry'}`}
               </p>
             </div>
-          </section>
-
-          <div className="bg-white rounded-3xl shadow-xl border border-[#ecebff] p-6 sm:p-8 space-y-4 text-center">
-            <p className="text-sm text-neutral-500">
-              لطفاً تمام موارد را تأیید کنید. با کلیک روی دکمه زیر، درخواست شما برای این شیفت ثبت می‌شود.
-            </p>
-            <button
-              onClick={handleSubmit}
-              disabled={!allRequirementsChecked || !allAgreementsChecked || submitting}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 rounded-2xl font-semibold text-white bg-[#6b41e0] shadow-lg hover:bg-[#5b35c7] transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? 'در حال ارسال درخواست...' : 'ثبت درخواست شیفت'}
-            </button>
+            <div className="text-white/80 font-display text-xl">
+              {language === 'fa'
+                ? `۱ شیفت • ${formatPersianTime(shift.start_time)} تا ${formatPersianTime(shift.end_time)}`
+                : `1 shift • ${shift.start_time}–${shift.end_time}`}
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
+        <div className={`${cardClasses} p-6 sm:p-8 space-y-6`}>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-ink/70 dark:text-concrete/70">
+            <span>{language === 'fa' ? 'نرخ ساعتی' : 'Hourly rate'}</span>
+            <span className="text-2xl font-display text-ink dark:text-concrete">
+              {language === 'fa'
+                ? `${formatPersianNumber(Math.floor(shift.hourly_wage / 10).toLocaleString())} تومان`
+                : `${Math.floor(shift.hourly_wage / 10).toLocaleString()} Toman`}
+            </span>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4 text-sm">
+            <div className="rounded-2xl border-2 border-ink/10 dark:border-concrete/30 bg-concrete/40 dark:bg-ink/20 p-4">
+              <div className="flex items-center gap-2 text-ink/60 dark:text-concrete/70 mb-2">
+                <CalendarDays className="w-4 h-4" />
+                {language === 'fa' ? 'زمان شیفت' : 'Shift time'}
+              </div>
+              <div className="font-semibold text-ink dark:text-concrete">
+                {formattedDate} • {formatPersianTime(shift.start_time)} تا {formatPersianTime(shift.end_time)}
+              </div>
+            </div>
+            <div className="rounded-2xl border-2 border-ink/10 dark:border-concrete/30 bg-concrete/40 dark:bg-ink/20 p-4">
+              <div className="flex items-center gap-2 text-ink/60 dark:text-concrete/70 mb-2">
+                <Clock3 className="w-4 h-4" />
+                {language === 'fa' ? 'لغو بدون جریمه' : 'Free cancellation'}
+              </div>
+              <div className="font-semibold text-ink dark:text-concrete">
+                {language === 'fa'
+                  ? `${shift.cancellation_deadline_hours || 48} ساعت پیش از شروع`
+                  : `${shift.cancellation_deadline_hours || 48}h before start`}
+              </div>
+            </div>
+            <div className="rounded-2xl border-2 border-ink/10 dark:border-concrete/30 bg-concrete/40 dark:bg-ink/20 p-4">
+              <div className="flex items-center gap-2 text-ink/60 dark:text-concrete/70 mb-2">
+                <Wallet className="w-4 h-4" />
+                {language === 'fa' ? 'درآمد کل' : 'Total income'}
+              </div>
+              <div className="font-semibold text-ink dark:text-concrete">
+                {language === 'fa'
+                  ? `${formatPersianNumber(totalIncome.toLocaleString())} تومان`
+                  : `${totalIncome.toLocaleString()} Toman`}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section className={`${cardClasses} p-6 sm:p-8 space-y-6`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-display text-ink dark:text-concrete">
+                {language === 'fa' ? 'شرایط و مهارت‌ها' : 'Requirements & skills'}
+              </h2>
+              <p className="text-sm text-ink/70 dark:text-concrete/70">
+                {language === 'fa' ? 'لطفاً تأیید کنید که تمام موارد زیر را دارید.' : 'Confirm you meet all of the following.'}
+              </p>
+            </div>
+            <CheckCircle2 className={`w-6 h-6 ${allRequirementsChecked ? 'text-moss' : 'text-ink/30 dark:text-concrete/40'}`} />
+          </div>
+          <div className="space-y-4">
+            {requirementList.map((item) => (
+              <label
+                key={item}
+                className={`flex items-center gap-4 rounded-2xl border p-4 cursor-pointer transition ${
+                  requirementsState[item] ? 'border-moss bg-moss/10' : 'border-ink/15 dark:border-concrete/30 bg-white dark:bg-ink/20'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={requirementsState[item] || false}
+                  onChange={() => handleRequirementToggle(item)}
+                  className="w-5 h-5 rounded border-ink/30 text-moss focus:ring-moss"
+                />
+                <span className="text-sm text-ink/80 dark:text-concrete/80">{item}</span>
+              </label>
+            ))}
+          </div>
+          {!allRequirementsChecked && (
+            <div className="flex items-center gap-2 text-xs text-safety border-2 border-safety/40 bg-safety/10 rounded-2xl px-4 py-3">
+              <AlertCircle className="w-4 h-4" />
+              {language === 'fa' ? 'لطفاً تمام موارد بالا را تأیید کنید تا بتوانید ادامه دهید.' : 'Please confirm all requirements to continue.'}
+            </div>
+          )}
+        </section>
+
+        <section className={`${cardClasses} p-6 sm:p-8 space-y-6`}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-display text-ink dark:text-concrete">
+              {language === 'fa' ? 'قوانین و مقررات' : 'Agreements'}
+            </h2>
+            <MapPin className="w-5 h-5 text-ink/60 dark:text-concrete/70" />
+          </div>
+          <div className="space-y-4">
+            {agreementItems.map((item) => (
+              <label
+                key={item.id}
+                className={`flex items-center gap-4 rounded-2xl border p-4 cursor-pointer transition ${
+                  agreementsState[item.id] ? 'border-moss bg-moss/10' : 'border-ink/15 dark:border-concrete/30 bg-white dark:bg-ink/20'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={agreementsState[item.id] || false}
+                  onChange={() => handleAgreementToggle(item.id)}
+                  className="w-5 h-5 rounded border-ink/30 text-moss focus:ring-moss"
+                />
+                <span className="text-sm text-ink/80 dark:text-concrete/80">
+                  {item.textBefore}
+                  <Link href={item.link} className="text-ink font-semibold underline decoration-dotted" target="_blank">
+                    {item.linkText}
+                  </Link>
+                  {item.textAfter}
+                </span>
+              </label>
+            ))}
+          </div>
+          {!allAgreementsChecked && (
+            <div className="flex items-start gap-3 text-xs text-safety border-2 border-safety/40 bg-safety/10 rounded-2xl px-4 py-3">
+              <AlertCircle className="w-4 h-4 mt-0.5" />
+              <p>{language === 'fa' ? 'برای ثبت درخواست، نیاز است با سیاست‌ها موافقت کنید.' : 'You must agree to the policies before applying.'}</p>
+            </div>
+          )}
+          <div className="flex items-start gap-3 text-xs text-white bg-ink rounded-2xl px-4 py-3 border-2 border-ink dark:bg-concrete dark:text-ink dark:border-concrete">
+            <AlertCircle className="w-4 h-4 mt-0.5" />
+            <p>
+              {language === 'fa'
+                ? `با ثبت درخواست، متعهد می‌شوید در زمان مشخص شده حاضر شوید. لغو کمتر از ${shift.cancellation_deadline_hours || 48} ساعت پیش از شروع، ممکن است امتیاز شما را کاهش دهد.`
+                : `Submitting a request means you commit to show up. Cancelling within ${shift.cancellation_deadline_hours || 48} hours may reduce your score.`}
+            </p>
+          </div>
+        </section>
+
+        <div className={`${cardClasses} p-6 sm:p-8 space-y-4 text-center`}>
+          <p className="text-sm text-ink/70 dark:text-concrete/70">
+            {language === 'fa'
+              ? 'پس از تأیید همه موارد، با دکمه زیر درخواست شما ثبت می‌شود.'
+              : 'Once everything is confirmed, submit your shift request below.'}
+          </p>
+          <button
+            onClick={handleSubmit}
+            disabled={!allRequirementsChecked || !allAgreementsChecked || submitting}
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 rounded-2xl font-display text-lg text-concrete bg-ink border-2 border-ink hover:bg-safety hover:text-ink transition disabled:opacity-40 dark:bg-concrete dark:text-ink dark:border-concrete"
+          >
+            {submitting
+              ? language === 'fa'
+                ? 'در حال ارسال...'
+                : 'Submitting...'
+              : language === 'fa'
+              ? 'ثبت درخواست شیفت'
+              : 'Submit shift request'}
+          </button>
         </div>
       </div>
     </div>

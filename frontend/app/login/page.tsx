@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
-import { setToken, setUser } from '@/lib/auth';
+import { isAuthenticated, setToken, setUser } from '@/lib/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function LoginPage() {
@@ -17,6 +17,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.replace('/profile');
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -26,7 +32,12 @@ export default function LoginPage() {
       const response = await authAPI.login(formData);
       setToken(response.data.token);
       setUser(response.data.user);
-      router.push('/profile');
+      // Dispatch event to notify Navbar immediately
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('user-login'));
+      }
+      // Use window.location.href to ensure full page refresh and Navbar update
+      window.location.href = '/profile';
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || '';
       if (errorMessage.includes('Invalid credentials') || errorMessage.includes('invalid') || errorMessage.toLowerCase().includes('credentials')) {

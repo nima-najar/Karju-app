@@ -454,10 +454,10 @@ const militaryStatusOptions = [
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-          <p className="text-white mt-4">Loading profile...</p>
+      <div className="min-h-screen bg-concrete dark:bg-ink flex items-center justify-center">
+        <div className="text-center text-ink dark:text-concrete space-y-4">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full border-4 border-ink/30 dark:border-concrete/40 border-t-ink dark:border-t-concrete animate-spin" />
+          <p className="font-display text-lg">{language === 'fa' ? 'در حال بارگذاری پروفایل...' : 'Loading profile...'}</p>
         </div>
       </div>
     );
@@ -465,10 +465,29 @@ const militaryStatusOptions = [
 
   if (user?.userType === 'worker') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 py-8">
-        <div id="personal-info" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold mb-8 text-white">{t('profile.editWorkerProfile')}</h1>
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl p-6 space-y-6">
+      <div className="min-h-screen bg-concrete dark:bg-ink text-ink dark:text-concrete pt-24 sm:pt-28">
+        <div className="bg-gradient-to-b from-ink to-moss text-concrete border-b-4 border-safety">
+          <div className="max-w-6xl mx-auto px-4 py-10 space-y-4 text-right">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-concrete px-4 py-1 text-sm font-display text-concrete hover:-translate-y-0.5 transition"
+            >
+              {language === 'fa' ? 'بازگشت' : 'Back'}
+            </button>
+            <h1 className="text-4xl font-display">{t('profile.editWorkerProfile')}</h1>
+            <p className="text-white/80 text-sm max-w-2xl leading-relaxed">
+              {language === 'fa'
+                ? 'اطلاعات خودت را به‌روز کن تا به فرصت‌های بهتر دسترسی داشته باشی.'
+                : 'Keep your profile up to date to unlock better shift opportunities.'}
+            </p>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 py-10">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white dark:bg-ink/40 rounded-[32px] border-2 border-ink dark:border-concrete shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)] p-6 sm:p-8 space-y-6"
+          >
             {/* Profile Picture Section */}
             <div className="flex flex-col items-center mb-6">
               <div className="relative">
@@ -477,7 +496,7 @@ const militaryStatusOptions = [
                     <img
                       src={profilePicture}
                       alt="Profile"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-primary-200"
+                      className="w-32 h-32 rounded-full object-cover border-4 border-moss"
                     />
                     <button
                       type="button"
@@ -489,8 +508,8 @@ const militaryStatusOptions = [
                     </button>
                   </div>
                 ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-primary-200">
-                    <User className="w-16 h-16 text-gray-400" />
+                  <div className="w-32 h-32 rounded-full bg-concrete flex items-center justify-center border-4 border-moss">
+                    <User className="w-16 h-16 text-ink" />
                   </div>
                 )}
               </div>
@@ -501,7 +520,7 @@ const militaryStatusOptions = [
                   onChange={handleImageChange}
                   className="hidden"
                 />
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-safety text-ink border-2 border-ink rounded-full hover:-translate-y-0.5 transition">
                   <Upload className="w-5 h-5" />
                   {language === 'fa'
                     ? profilePicture
@@ -947,7 +966,7 @@ const militaryStatusOptions = [
               <button
                 type="button"
                 onClick={handleAddLanguage}
-                className="btn-primary whitespace-nowrap"
+                className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 rounded-2xl border-2 border-ink bg-safety text-ink font-semibold hover:-translate-y-0.5 transition disabled:opacity-50"
               >
                 {language === 'fa' ? 'افزودن زبان' : 'Add language'}
               </button>
@@ -963,7 +982,7 @@ const militaryStatusOptions = [
                 languagesState.map((lang, index) => (
                   <span
                     key={`${lang.name}-${index}`}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#f3f4ff] text-[#1a25a2] px-3 py-1 text-sm"
+                    className="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-concrete/70 text-ink px-3 py-1 text-sm"
                   >
                     <span>
                       {language === 'fa' ? toPersianNum(lang.name) : lang.name}
@@ -972,7 +991,7 @@ const militaryStatusOptions = [
                     <button
                       type="button"
                       onClick={() => handleRemoveLanguage(index)}
-                      className="text-xs text-[#1a25a2]/70 hover:text-[#1a25a2]"
+                      className="text-xs text-ink/60 hover:text-ink"
                       aria-label={language === 'fa' ? 'حذف زبان' : 'Remove language'}
                     >
                       ×
@@ -1002,8 +1021,8 @@ const militaryStatusOptions = [
                 return (
                   <div
                     key={docDef.key}
-                    className={`rounded-[16px] border p-4 space-y-3 ${
-                      isUploaded ? 'border-[#00d4aa]/40 bg-[#00d4aa]/5' : 'border-gray-200 bg-gray-50'
+                    className={`rounded-[16px] border-2 p-4 space-y-3 ${
+                      isUploaded ? 'border-moss bg-moss/10' : 'border-ink/10 bg-concrete/60'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -1017,9 +1036,7 @@ const militaryStatusOptions = [
                       </div>
                       <span
                         className={`inline-flex h-6 items-center rounded-full px-2 text-xs font-medium ${
-                          isUploaded
-                            ? 'bg-[#00d4aa]/20 text-[#0f766e]'
-                            : 'bg-gray-200 text-gray-600'
+                          isUploaded ? 'bg-moss/20 text-moss' : 'bg-ink/10 text-ink/70'
                         }`}
                       >
                         {isUploaded
@@ -1033,8 +1050,8 @@ const militaryStatusOptions = [
                     </div>
 
                     {isUploaded && (
-                      <div className="rounded-2xl bg-white/70 border border-white/80 px-3 py-2 text-xs text-gray-600">
-                        <p className="font-medium text-gray-800">{doc?.fileName || 'document'}</p>
+                      <div className="rounded-2xl bg-white/80 border border-white px-3 py-2 text-xs text-ink/80">
+                        <p className="font-medium text-ink">{doc?.fileName || 'document'}</p>
                         {doc?.uploadedAt && (
                           <p className="mt-1">
                             {language === 'fa'
@@ -1055,7 +1072,7 @@ const militaryStatusOptions = [
                       />
                       <label
                         htmlFor={inputId}
-                        className="inline-flex cursor-pointer items-center rounded-full bg-[#1a25a2] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#161c85] transition"
+                        className="inline-flex cursor-pointer items-center rounded-full border-2 border-ink bg-safety px-3 py-1.5 text-xs font-medium text-ink hover:-translate-y-0.5 transition"
                       >
                         {isUploaded
                           ? language === 'fa'
@@ -1070,14 +1087,14 @@ const militaryStatusOptions = [
                           <button
                             type="button"
                             onClick={() => handleDocumentDownload(doc)}
-                            className="inline-flex items-center rounded-full border border-[#1a25a2] px-3 py-1.5 text-xs font-medium text-[#1a25a2] hover:bg-[#1a25a2]/5 transition"
+                            className="inline-flex items-center rounded-full border-2 border-ink px-3 py-1.5 text-xs font-medium text-ink hover:-translate-y-0.5 transition"
                           >
                             {language === 'fa' ? 'دانلود' : 'Download'}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDocumentRemove(docDef.key)}
-                            className="inline-flex items-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                            className="inline-flex items-center rounded-full border-2 border-red-400 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
                           >
                             {language === 'fa' ? 'حذف' : 'Remove'}
                           </button>
@@ -1094,11 +1111,15 @@ const militaryStatusOptions = [
             <button
               type="button"
               onClick={() => router.push('/profile')}
-              className="flex-1 btn-secondary py-3 rounded-full"
+              className="flex-1 py-3 rounded-full border-2 border-ink/40 text-ink dark:text-concrete hover:-translate-y-0.5 transition"
             >
               {language === 'fa' ? 'انصراف' : 'Cancel'}
             </button>
-            <button type="submit" disabled={saving} className="flex-1 btn-primary py-3 rounded-full">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-3 rounded-full border-2 border-ink bg-safety text-ink font-semibold hover:-translate-y-0.5 transition disabled:opacity-50"
+            >
               {saving ? (language === 'fa' ? 'در حال ذخیره...' : 'Saving...') : language === 'fa' ? 'ذخیره' : 'Save Profile'}
             </button>
           </div>
@@ -1196,11 +1217,15 @@ const militaryStatusOptions = [
           <button
             type="button"
             onClick={() => router.push('/profile')}
-            className="flex-1 btn-secondary py-3"
+            className="flex-1 py-3 rounded-full border-2 border-ink/40 text-ink hover:-translate-y-0.5 transition"
           >
             Cancel
           </button>
-          <button type="submit" disabled={saving} className="flex-1 btn-primary py-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 py-3 rounded-full border-2 border-ink bg-safety text-ink font-semibold hover:-translate-y-0.5 transition disabled:opacity-50"
+          >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
         </div>

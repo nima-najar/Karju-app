@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { profileAPI } from '@/lib/api';
 import { getUser } from '@/lib/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Award, Download, Trash2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Award, Download, Trash2, UploadCloud } from 'lucide-react';
 import { gregorianToJalali, jalaliToGregorian, toPersianNum } from '@/lib/persianUtils';
 
 type Certificate = {
@@ -67,6 +67,7 @@ const getJalaliMonthLength = (year: number, month: number) => {
 export default function CertificatesPage() {
   const router = useRouter();
   const { language } = useLanguage();
+  const isRTL = language === 'fa';
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -478,10 +479,10 @@ export default function CertificatesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center">
+      <div className="min-h-screen bg-concrete flex items-center justify-center pt-24">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-          <p className="text-primary-700 mt-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-ink" />
+          <p className="text-ink font-bold mt-4 font-body">
             {language === 'fa' ? 'در حال بارگذاری...' : 'Loading...'}
           </p>
         </div>
@@ -495,21 +496,24 @@ export default function CertificatesPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f9f9f9] text-neutral-900"
+      className="min-h-screen bg-concrete dark:bg-ink text-ink dark:text-concrete pt-28 pb-12"
       dir={language === 'fa' ? 'rtl' : 'ltr'}
     >
       <div className="max-w-[1200px] mx-auto px-6 py-10 space-y-8">
         <div className="flex flex-col gap-2">
-          <Link
-            href="/profile"
-            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors text-sm font-medium"
-          >
-            {language === 'fa' ? 'بازگشت به پروفایل' : 'Back to profile'}
-          </Link>
-          <h1 className="text-3xl font-bold">
-            {language === 'fa' ? 'گواهینامه‌های من' : 'My Certificates'}
-          </h1>
-          <p className="text-neutral-500">
+          <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+            <h1 className="text-4xl font-display text-ink">
+              {language === 'fa' ? 'گواهینامه‌های من' : 'My Certificates'}
+            </h1>
+            <Link
+              href="/profile"
+              className="inline-flex items-center justify-center w-14 h-14 rounded-full border-[3px] border-ink text-ink bg-white shadow-[3px_3px_0px_0px_#1a1a1a] hover:-translate-y-0.5 hover:bg-concrete-dark transition-all dark:bg-concrete-dark dark:text-concrete"
+              aria-label={language === 'fa' ? 'بازگشت به پروفایل' : 'Back to profile'}
+            >
+              {isRTL ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
+            </Link>
+          </div>
+          <p className="text-ink/70 font-body">
             {language === 'fa'
               ? 'گواهینامه‌های تایید شده شانس شما را برای پذیرش در شیفت‌های تخصصی افزایش می‌دهد.'
               : 'Verified certificates boost your chances of getting matched with specialized shifts.'}
@@ -518,17 +522,17 @@ export default function CertificatesPage() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <section className="space-y-6 lg:order-2">
-            <div className="rounded-[16px] border border-gray-200 bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-8 space-y-6">
+            <div className="rounded-[2rem] border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete shadow-[4px_4px_0px_0px_#1a1a1a] p-8 space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(26,37,162,0.1)] p-3">
-                    <Award className="w-6 h-6 text-[#4e57b7]" />
+                  <span className="inline-flex items-center justify-center rounded-full bg-moss/20 border-2 border-ink p-3">
+                    <Award className="w-6 h-6 text-moss" />
                   </span>
                   <div>
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-display text-ink">
                       {language === 'fa' ? 'لیست گواهینامه‌ها' : 'Certificate list'}
                     </h2>
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-ink/70 font-body">
                       {totalCountLabel}
                     </p>
                   </div>
@@ -537,8 +541,8 @@ export default function CertificatesPage() {
 
               <div className="space-y-4">
                 {certificates.length === 0 ? (
-                  <div className="rounded-[14px] border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-                    <p className="text-neutral-500">
+                  <div className="rounded-xl border-2 border-dashed border-ink/30 bg-concrete-dark dark:bg-concrete p-6 text-center">
+                    <p className="text-ink/70 font-body">
                       {language === 'fa'
                         ? 'هنوز گواهینامه‌ای ثبت نشده است.'
                         : 'No certificates have been added yet.'}
@@ -563,22 +567,22 @@ export default function CertificatesPage() {
                     return (
                       <article
                         key={certificate.id}
-                        className="rounded-[14px] border border-gray-200 bg-white px-6 py-5 shadow-sm"
+                        className="rounded-xl border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete px-6 py-5 shadow-[4px_4px_0px_0px_#1a1a1a] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1a1a1a] transition-all"
                       >
                         <div className="flex flex-col gap-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex items-center gap-3">
-                              <span className="inline-flex items-center justify-center rounded-full bg-[rgba(26,37,162,0.12)] p-2">
-                                <Award className="w-5 h-5 text-[#4e57b7]" />
+                              <span className="inline-flex items-center justify-center rounded-full bg-moss/20 border-2 border-ink p-2">
+                                <Award className="w-5 h-5 text-moss" />
                               </span>
                               <div className="space-y-1">
-                                <h3 className="text-lg font-semibold text-neutral-900">
+                                <h3 className="text-lg font-display text-ink">
                                   {certificate.title}
                                 </h3>
-                                <p className="text-sm text-neutral-500">
+                                <p className="text-sm text-ink/70 font-body">
                                   {certificate.issuer}
                                 </p>
-                                <p className="text-xs text-neutral-400">
+                                <p className="text-xs text-ink/60 font-body">
                                   {language === 'fa'
                                     ? `تاریخ صدور: ${displayDate}`
                                     : `Issued on ${displayDate}`}
@@ -590,7 +594,7 @@ export default function CertificatesPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDownload(certificate)}
-                                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-neutral-500 hover:bg-gray-100 transition-colors"
+                                className="inline-flex items-center justify-center rounded-full border-2 border-ink p-2 text-ink hover:bg-concrete-dark dark:bg-concrete transition-all"
                                 aria-label={language === 'fa' ? 'دانلود گواهینامه' : 'Download certificate'}
                               >
                                 <Download className="w-4 h-4" />
@@ -598,7 +602,7 @@ export default function CertificatesPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDelete(certificate.id)}
-                                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-neutral-500 hover:bg-gray-100 transition-colors"
+                                className="inline-flex items-center justify-center rounded-full border-2 border-ink p-2 text-safety hover:bg-safety/20 transition-all"
                                 aria-label={language === 'fa' ? 'حذف گواهینامه' : 'Delete certificate'}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -606,7 +610,7 @@ export default function CertificatesPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-4 text-sm text-neutral-500">
+                          <div className="flex flex-wrap items-center gap-4 border-t-2 border-ink/20 pt-4 text-sm text-ink/70 font-body">
                             <span>
                               {language === 'fa'
                                 ? `حجم فایل: ${formatFileSize(certificate.fileSize, 'fa')}`
@@ -626,11 +630,11 @@ export default function CertificatesPage() {
               </div>
             </div>
 
-            <div className="rounded-[16px] bg-gradient-to-b from-[rgba(26,37,162,0.88)] to-[rgba(91,33,182,0.88)] p-8 text-white shadow-lg space-y-4">
-              <h3 className="text-xl font-semibold">
+            <div className="rounded-[2rem] bg-gradient-to-b from-ink to-moss border-2 border-ink p-8 text-concrete shadow-[4px_4px_0px_0px_#1a1a1a] space-y-4">
+              <h3 className="text-xl font-display">
                 {language === 'fa' ? 'چرا گواهینامه اضافه کنم؟' : 'Why add certificates?'}
               </h3>
-              <ul className="space-y-3 text-sm leading-6">
+              <ul className="space-y-3 text-sm leading-6 font-body">
                 <li className="flex items-start gap-2">
                   <span>✓</span>
                   <span>
@@ -668,12 +672,12 @@ export default function CertificatesPage() {
           </section>
 
           <section className="lg:order-1">
-            <div className="rounded-[16px] border border-gray-200 bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-8 space-y-6">
+            <div className="rounded-[2rem] border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete shadow-[4px_4px_0px_0px_#1a1a1a] p-8 space-y-6">
               <div className="space-y-1">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-display text-ink">
                   {language === 'fa' ? 'افزودن گواهینامه جدید' : 'Add a new certificate'}
                 </h2>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-ink/70 font-body">
                   {language === 'fa'
                     ? 'فایل گواهینامه خود را بارگذاری کنید و اطلاعات آن را تکمیل نمایید.'
                     : 'Upload your certificate file and fill out its details.'}
@@ -683,8 +687,8 @@ export default function CertificatesPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div
                   className={[
-                    'relative flex flex-col items-center justify-center rounded-[16px] border-2 border-dashed',
-                    dragActive ? 'border-[#4e57b7] bg-[#f4f6ff]' : 'border-[#d1d5dc] bg-[#f3f3f5]',
+                    'relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed',
+                    dragActive ? 'border-safety bg-safety/10' : 'border-ink/30 bg-concrete-dark dark:bg-concrete',
                     'px-6 py-10 text-center transition-colors',
                   ].join(' ')}
                   onDrop={onDrop}
@@ -692,22 +696,22 @@ export default function CertificatesPage() {
                   onDragLeave={onDragLeave}
                 >
                   <div className="flex flex-col items-center gap-4">
-                    <div className="inline-flex items-center justify-center rounded-full bg-white p-4 shadow-md">
-                      <UploadCloud className="w-8 h-8 text-[#4e57b7]" />
+                    <div className="inline-flex items-center justify-center rounded-full bg-white dark:bg-concrete-dark dark:bg-concrete border-2 border-ink p-4 shadow-[2px_2px_0px_0px_#1a1a1a]">
+                      <UploadCloud className="w-8 h-8 text-moss" />
                     </div>
                     <div className="space-y-2">
-                      <p className="text-lg font-medium">
+                      <p className="text-lg font-display text-ink">
                         {language === 'fa'
                           ? 'فایل را اینجا بکشید و رها کنید'
                           : 'Drag & drop your file here'}
                       </p>
-                      <p className="text-sm text-neutral-500">
+                      <p className="text-sm text-ink/70 font-body">
                         {language === 'fa'
                           ? 'یا روی دکمه زیر کلیک کنید'
                           : 'or click the button below'}
                       </p>
                     </div>
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-[10px] bg-[#4e57b7] px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-[#3940a3] transition-colors">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-moss text-concrete border-2 border-ink px-5 py-3 text-sm font-bold shadow-[2px_2px_0px_0px_#1a1a1a] hover:shadow-[4px_4px_0px_0px_#1a1a1a] hover:-translate-y-1 transition-all">
                       <input
                         type="file"
                         accept=".png,.jpg,.jpeg,.pdf"
@@ -719,24 +723,24 @@ export default function CertificatesPage() {
                     </label>
                     {selectedFile && (
                       <div className="w-full space-y-4">
-                        <div className="rounded-[12px] border border-gray-200 bg-white px-4 py-2 text-sm text-neutral-500 shadow-sm">
-                          <p className="font-medium text-neutral-700">{selectedFile.name}</p>
-                          <p>
+                        <div className="rounded-xl border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete px-4 py-2 text-sm text-ink shadow-[2px_2px_0px_0px_#1a1a1a]">
+                          <p className="font-bold text-ink font-body">{selectedFile.name}</p>
+                          <p className="font-body">
                             {language === 'fa'
                               ? `حجم: ${formatFileSize(selectedFile.size, 'fa')}`
                               : `Size: ${formatFileSize(selectedFile.size, 'en')}`}
                           </p>
                         </div>
                         {filePreview && (
-                          <div className="rounded-[14px] border border-gray-200 bg-white p-4 shadow-sm">
+                          <div className="rounded-xl border-2 border-ink bg-white dark:bg-concrete-dark dark:bg-concrete p-4 shadow-[2px_2px_0px_0px_#1a1a1a]">
                             {filePreview.type === 'image' ? (
                               <img
                                 src={filePreview.url}
                                 alt={selectedFile.name}
-                                className="mx-auto max-h-64 w-full rounded-[12px] object-contain"
+                                className="mx-auto max-h-64 w-full rounded-lg object-contain"
                               />
                             ) : (
-                              <div className="mx-auto w-full overflow-hidden rounded-[12px] border border-gray-200 bg-gray-50">
+                              <div className="mx-auto w-full overflow-hidden rounded-lg border-2 border-ink bg-concrete-dark dark:bg-concrete">
                                 <iframe
                                   src={filePreview.url}
                                   title={selectedFile.name}
@@ -750,7 +754,7 @@ export default function CertificatesPage() {
                     )}
                   </div>
 
-                  <p className="mt-6 text-xs text-neutral-400">
+                  <p className="mt-6 text-xs text-ink/60 font-body">
                     {language === 'fa'
                       ? 'فرمت‌های مجاز: PDF, JPG, PNG (حداکثر ۵ مگابایت)'
                       : 'Allowed formats: PDF, JPG, PNG (max 5MB)'}
@@ -758,19 +762,19 @@ export default function CertificatesPage() {
                 </div>
 
                 {fileError && (
-                  <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  <div className="rounded-xl border-2 border-safety bg-safety/10 px-4 py-3 text-sm text-safety font-bold">
                     {fileError}
                   </div>
                 )}
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-neutral-600">
+                    <label className="block text-sm font-bold text-ink font-body">
                       {language === 'fa' ? 'نام گواهینامه' : 'Certificate name'}
                     </label>
                     <input
                       type="text"
-                      className="w-full rounded-[10px] border border-gray-200 bg-[#f3f3f5] px-4 py-3 text-sm focus:border-[#4e57b7] focus:outline-none focus:ring-2 focus:ring-[#4e57b733]"
+                      className="input-field"
                       placeholder={
                         language === 'fa'
                           ? 'مثال: گواهینامه خدمات مشتری'
@@ -784,12 +788,12 @@ export default function CertificatesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-neutral-600">
+                    <label className="block text-sm font-bold text-ink font-body">
                       {language === 'fa' ? 'مؤسسه صادرکننده' : 'Issuing organization'}
                     </label>
                     <input
                       type="text"
-                      className="w-full rounded-[10px] border border-gray-200 bg-[#f3f3f5] px-4 py-3 text-sm focus:border-[#4e57b7] focus:outline-none focus:ring-2 focus:ring-[#4e57b733]"
+                      className="input-field"
                       placeholder={
                         language === 'fa'
                           ? 'مثال: مؤسسه آموزش فنی و حرفه‌ای'
@@ -803,14 +807,14 @@ export default function CertificatesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-neutral-600">
+                    <label className="block text-sm font-bold text-ink font-body">
                       {language === 'fa' ? 'تاریخ صدور' : 'Issue date'}
                     </label>
                     {language === 'fa' ? (
                       <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-3">
                           <select
-                            className="rounded-[10px] border border-gray-200 bg-[#f3f3f5] px-3 py-3 text-sm focus:border-[#4e57b7] focus:outline-none focus:ring-2 focus:ring-[#4e57b733]"
+                            className="input-field"
                             value={jalaliSelection.year}
                             onChange={(event) =>
                               handleJalaliSelectChange('year', convertPersianDigitsToEnglish(event.target.value))
@@ -825,7 +829,7 @@ export default function CertificatesPage() {
                           </select>
 
                           <select
-                            className="rounded-[10px] border border-gray-200 bg-[#f3f3f5] px-3 py-3 text-sm focus:border-[#4e57b7] focus:outline-none focus:ring-2 focus:ring-[#4e57b733]"
+                            className="input-field"
                             value={jalaliSelection.month}
                             onChange={(event) =>
                               handleJalaliSelectChange('month', convertPersianDigitsToEnglish(event.target.value))
@@ -840,7 +844,7 @@ export default function CertificatesPage() {
                           </select>
 
                           <select
-                            className="rounded-[10px] border border-gray-200 bg-[#f3f3f5] px-3 py-3 text-sm focus:border-[#4e57b7] focus:outline-none focus:ring-2 focus:ring-[#4e57b733]"
+                            className="input-field"
                             value={jalaliSelection.day}
                             onChange={(event) =>
                               handleJalaliSelectChange('day', convertPersianDigitsToEnglish(event.target.value))
@@ -855,7 +859,7 @@ export default function CertificatesPage() {
                           </select>
                         </div>
                         {formData.issueDate && (
-                          <p className="text-xs text-neutral-400">
+                          <p className="text-xs text-ink/60 font-body">
                             {new Date(formData.issueDate).toLocaleDateString('en-CA')}
                           </p>
                         )}
@@ -863,7 +867,7 @@ export default function CertificatesPage() {
                     ) : (
                       <input
                         type="date"
-                        className="w-full rounded-[10px] border border-gray-200 bg-[#f3f3f5] px-4 py-3 text-sm focus:border-[#4e57b7] focus:outline-none focus:ring-2 focus:ring-[#4e57b733]"
+                        className="input-field"
                         value={formData.issueDate}
                         onChange={(event) =>
                           setFormData((prev) => ({ ...prev, issueDate: event.target.value }))
@@ -876,7 +880,7 @@ export default function CertificatesPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full rounded-[10px] bg-[#4e57b7] px-4 py-3 text-white font-medium shadow-sm hover:bg-[#3b43a8] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full btn-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving
                     ? language === 'fa'

@@ -169,10 +169,11 @@ export default function ShiftsMap({ shifts, selectedShiftId, onShiftClick, langu
           if (mapRef.current) {
             // Show a message on the map
             const infoDiv = document.createElement('div');
-            infoDiv.style.cssText = 'position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);';
+            const isDark = document.documentElement.classList.contains('dark');
+            infoDiv.style.cssText = `position: absolute; top: 10px; left: 10px; background: ${isDark ? '#e0ded9' : 'white'}; padding: 10px; border-radius: 5px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);`;
             infoDiv.innerHTML = language === 'fa' 
-              ? '<p style="margin:0; color: #666;">هیچ شیفتی با مختصات جغرافیایی یافت نشد</p>'
-              : '<p style="margin:0; color: #666;">No shifts with coordinates found</p>';
+              ? `<p style="margin:0; color: ${isDark ? '#1a1a1a' : '#666'};">هیچ شیفتی با مختصات جغرافیایی یافت نشد</p>`
+              : `<p style="margin:0; color: ${isDark ? '#1a1a1a' : '#666'};">No shifts with coordinates found</p>`;
             mapContainerRef.current?.appendChild(infoDiv);
           }
           return;
@@ -346,18 +347,18 @@ export default function ShiftsMap({ shifts, selectedShiftId, onShiftClick, langu
 
   if (!isMounted) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg" style={{ minHeight: '400px' }}>
-        <div className="text-gray-500">در حال بارگذاری نقشه...</div>
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-concrete rounded-lg" style={{ minHeight: '400px' }}>
+        <div className="text-gray-500 dark:text-white">در حال بارگذاری نقشه...</div>
       </div>
     );
   }
 
   if (mapError) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg" style={{ minHeight: '400px' }}>
-        <div className="text-red-500 text-center">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-concrete rounded-lg" style={{ minHeight: '400px' }}>
+        <div className="text-red-500 dark:text-safety text-center">
           <p>{mapError}</p>
-          <p className="text-sm mt-2 text-gray-600">لطفاً صفحه را رفرش کنید</p>
+          <p className="text-sm mt-2 text-gray-600 dark:text-white/70">لطفاً صفحه را رفرش کنید</p>
         </div>
       </div>
     );

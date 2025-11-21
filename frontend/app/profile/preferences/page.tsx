@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, Lightbulb, Loader2, Save, SunMedium, Globe2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bell, Lightbulb, Loader2, Save, Globe2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { profileAPI } from '@/lib/api';
 import { getUser } from '@/lib/auth';
@@ -162,6 +163,9 @@ function PreferenceSwitch({
 export default function PreferencesPage() {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
+  const isRTL = language === 'fa';
+  const backButtonClasses =
+    'inline-flex items-center justify-center w-14 h-14 rounded-full border-[3px] border-ink bg-white text-ink shadow-[3px_3px_0px_0px_#1a1a1a] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#1a1a1a] transition-all dark:bg-concrete-dark dark:text-concrete dark:border-concrete';
 
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -210,7 +214,6 @@ export default function PreferencesPage() {
     loadPreferences();
   }, [language, router]);
 
-  const isRTL = language === 'fa';
   const isDark = preferences.appearance.darkMode;
 
   useEffect(() => {
@@ -226,76 +229,76 @@ export default function PreferencesPage() {
   const theme = useMemo(() => {
     if (isDark) {
       return {
-        pageBg: 'bg-[#0b1220]',
-        textPrimary: 'text-[#f8fafc]',
-        textSecondary: 'text-[#9aa6c9]',
-        summaryCard: 'bg-[#101b33] border border-white/10',
-        summaryCardShadow: 'shadow-[0px_16px_36px_rgba(7,12,31,0.55)]',
-        summaryIcon: 'bg-primary-500/20 text-primary-200',
-        summaryHelper: 'text-[#9aa6c9]',
-        summaryTextPrimary: 'text-[#f8fafc]',
-        summaryTextSecondary: 'text-[#9aa6c9]',
-        highlight: 'border border-primary-500/40 bg-primary-500/5',
-        highlightText: 'text-primary-200',
-        infoCard: 'bg-[#101b33] border border-white/10',
-        infoShadow: 'shadow-[0px_20px_48px_rgba(7,12,31,0.55)]',
-        buttonPrimary: 'bg-primary-500 hover:bg-primary-600 text-white',
-        buttonDisabled: 'bg-primary-500/40 text-white/70 cursor-not-allowed',
-        feedbackSuccess: 'bg-green-500/20 text-green-200',
-        feedbackError: 'bg-red-500/20 text-red-200',
+        pageBg: 'bg-ink',
+        textPrimary: 'text-white',
+        textSecondary: 'text-white/80',
+        summaryCard: 'bg-concrete-light border-2 border-concrete',
+        summaryCardShadow: 'shadow-[4px_4px_0px_0px_#e0ded9]',
+        summaryIcon: 'bg-safety/20 text-safety',
+        summaryHelper: 'text-ink/80',
+        summaryTextPrimary: 'text-ink',
+        summaryTextSecondary: 'text-ink/80',
+        highlight: 'border-2 border-safety bg-safety/10',
+        highlightText: 'text-safety',
+        infoCard: 'bg-concrete-light border-2 border-concrete',
+        infoShadow: 'shadow-[4px_4px_0px_0px_#e0ded9]',
+        buttonPrimary: 'bg-safety hover:bg-safety-dark text-ink',
+        buttonDisabled: 'bg-safety/40 text-ink/70 cursor-not-allowed',
+        feedbackSuccess: 'bg-moss/20 text-moss border-2 border-moss',
+        feedbackError: 'bg-safety/20 text-safety border-2 border-safety',
         switchContainer:
-          'bg-[#17233e] border border-white/10 shadow-[0px_14px_36px_rgba(7,12,31,0.45)] hover:border-primary-400/40',
-        switchLabel: 'text-[#f8fafc]',
-        switchDescription: 'text-[#94a3c6]',
-        toggleOn: 'bg-primary-500',
-        toggleOff: 'bg-[#334155]',
-        toggleThumb: 'bg-white',
+          'bg-concrete-light border-2 border-concrete shadow-[2px_2px_0px_0px_#e0ded9] hover:border-safety',
+        switchLabel: 'text-ink',
+        switchDescription: 'text-ink/80',
+        toggleOn: 'bg-safety',
+        toggleOff: 'bg-concrete',
+        toggleThumb: 'bg-concrete-light',
         switchDisabled: 'opacity-50 cursor-not-allowed',
-        sectionCard: 'bg-[#101b33] border border-white/10',
-        sectionShadow: 'shadow-[0px_20px_48px_rgba(7,12,31,0.55)]',
-        sectionTitle: 'text-[#f8fafc]',
-        sectionSubtitle: 'text-[#9aa6c9]',
-        iconBadge: 'bg-primary-500/15 text-primary-200',
-        languageOptionActive: 'border-primary-400 bg-primary-500/15 text-primary-200',
-        languageOption: 'border-white/10 bg-[#101b33] text-[#e2e8f0]',
-        languageOptionHover: 'hover:border-primary-400/50',
+        sectionCard: 'bg-concrete-light border-2 border-concrete',
+        sectionShadow: 'shadow-[4px_4px_0px_0px_#e0ded9]',
+        sectionTitle: 'text-ink',
+        sectionSubtitle: 'text-ink/80',
+        iconBadge: 'bg-safety/20 text-safety border-2 border-safety',
+        languageOptionActive: 'border-2 border-safety bg-safety/20 text-safety',
+        languageOption: 'border-2 border-concrete bg-concrete-light text-ink',
+        languageOptionHover: 'hover:border-safety',
       } as const;
     }
 
     return {
-      pageBg: 'bg-[#f5f7ff]',
-      textPrimary: 'text-neutral-900',
-      textSecondary: 'text-neutral-600',
-      summaryCard: 'bg-white border border-transparent',
-      summaryCardShadow: 'shadow-[0px_16px_32px_rgba(15,23,42,0.06)]',
-      summaryIcon: 'bg-primary-50 text-primary-600',
-      summaryHelper: 'text-neutral-500',
-      summaryTextPrimary: 'text-neutral-900',
-      summaryTextSecondary: 'text-neutral-500',
-      highlight: 'border border-dashed border-primary-200 bg-primary-50/60',
-      highlightText: 'text-primary-700',
-      infoCard: 'bg-white border border-transparent',
-      infoShadow: 'shadow-[0px_18px_36px_rgba(15,23,42,0.08)]',
-      buttonPrimary: 'bg-primary-600 hover:bg-primary-700 text-white',
-      buttonDisabled: 'bg-primary-200 text-white cursor-not-allowed',
-      feedbackSuccess: 'bg-green-100 text-green-700',
-      feedbackError: 'bg-red-100 text-red-600',
+      pageBg: 'bg-concrete dark:bg-ink',
+      textPrimary: 'text-ink',
+      textSecondary: 'text-ink/70',
+      summaryCard: 'bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete',
+      summaryCardShadow: 'shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9]',
+      summaryIcon: 'bg-moss/20 text-moss border-2 border-moss',
+      summaryHelper: 'text-ink/70 dark:text-ink/80',
+      summaryTextPrimary: 'text-ink dark:text-ink',
+      summaryTextSecondary: 'text-ink/70 dark:text-ink/80',
+      highlight: 'border-2 border-dashed border-safety bg-safety/10',
+      highlightText: 'text-safety',
+      infoCard: 'bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete',
+      infoShadow: 'shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9]',
+      buttonPrimary: 'bg-ink dark:bg-safety hover:bg-safety hover:text-ink text-concrete dark:text-ink',
+      buttonDisabled: 'bg-ink/40 dark:bg-concrete/40 text-concrete/70 dark:text-ink/70 cursor-not-allowed',
+      feedbackSuccess: 'bg-moss/20 text-moss border-2 border-moss',
+      feedbackError: 'bg-safety/20 text-safety border-2 border-safety',
       switchContainer:
-        'bg-white/70 border border-transparent shadow-[0px_12px_32px_rgba(15,23,42,0.04)] hover:border-primary-100',
-      switchLabel: 'text-neutral-900',
-      switchDescription: 'text-neutral-500',
-      toggleOn: 'bg-primary-600',
-      toggleOff: 'bg-neutral-300',
-      toggleThumb: 'bg-white',
+        'bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9] hover:border-safety',
+      switchLabel: 'text-ink dark:text-ink',
+      switchDescription: 'text-ink/70 dark:text-ink/80',
+      toggleOn: 'bg-moss',
+      toggleOff: 'bg-concrete-dark dark:bg-concrete',
+      toggleThumb: 'bg-white dark:bg-concrete-light',
       switchDisabled: 'opacity-50 cursor-not-allowed',
-      sectionCard: 'bg-white border border-transparent',
-      sectionShadow: 'shadow-[0px_18px_36px_rgba(15,23,42,0.08)]',
-      sectionTitle: 'text-neutral-900',
-      sectionSubtitle: 'text-neutral-500',
-      iconBadge: 'bg-primary-50 text-primary-600',
-      languageOptionActive: 'border-primary-300 bg-primary-50/60 text-primary-700',
-      languageOption: 'border-neutral-200 bg-white text-neutral-700',
-      languageOptionHover: 'hover:border-primary-200',
+      sectionCard: 'bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete',
+      sectionShadow: 'shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9]',
+      sectionTitle: 'text-ink dark:text-ink',
+      sectionSubtitle: 'text-ink/70 dark:text-ink/80',
+      iconBadge: 'bg-moss/20 text-moss border-2 border-moss',
+      languageOptionActive: 'border-2 border-moss bg-moss/20 text-moss',
+      languageOption: 'border-2 border-ink dark:border-concrete bg-white dark:bg-concrete-light text-ink dark:text-ink',
+      languageOptionHover: 'hover:border-safety',
     } as const;
   }, [isDark]);
 
@@ -318,17 +321,6 @@ export default function PreferencesPage() {
       notifications: {
         ...prev.notifications,
         [key]: value,
-      },
-    }));
-    setDirty(true);
-  };
-
-  const handleThemeChange = (darkMode: boolean) => {
-    setPreferences((prev) => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        darkMode,
       },
     }));
     setDirty(true);
@@ -408,28 +400,20 @@ export default function PreferencesPage() {
     return language === 'fa' ? active.join('، ') : active.join(', ');
   }, [language, preferences.notifications.email, preferences.notifications.instant, preferences.notifications.sms]);
 
-  const appearanceSummary = preferences.appearance.darkMode
-    ? language === 'fa'
-      ? 'حالت تاریک'
-      : 'Dark mode'
-    : language === 'fa'
-    ? 'قالب روشن'
-    : 'Light mode';
-
   const languageSummary = preferences.language === 'fa' ? 'فارسی' : 'English';
 
   if (loading) {
     return (
       <div
         className={cx(
-          'min-h-screen flex items-center justify-center transition-colors duration-300',
+          'min-h-screen flex items-center justify-center transition-colors duration-300 pt-24',
           theme.pageBg,
         )}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        <div className="flex flex-col items-center gap-4 text-primary-500">
+        <div className="flex flex-col items-center gap-4 text-safety">
           <Loader2 className="h-10 w-10 animate-spin" />
-          <p className={cx('text-sm font-medium', theme.textPrimary)}>
+          <p className={cx('text-sm font-bold font-body', theme.textPrimary)}>
             {language === 'fa' ? 'در حال بارگذاری تنظیمات...' : 'Loading your preferences...'}
           </p>
         </div>
@@ -457,10 +441,10 @@ export default function PreferencesPage() {
             theme.sectionShadow,
           )}
         >
-          <h1 className={cx('text-2xl font-bold', theme.sectionTitle)}>
+          <h1 className={cx('text-2xl font-display', theme.sectionTitle)}>
             {language === 'fa' ? 'به‌زودی' : 'Coming soon'}
           </h1>
-          <p className={cx('mt-3', theme.sectionSubtitle)}>
+          <p className={cx('mt-3 font-body', theme.sectionSubtitle)}>
             {language === 'fa'
               ? 'بخش ترجیحات برای حساب کارجو طراحی شده است.'
               : 'Preferences are currently available for worker accounts only.'}
@@ -473,24 +457,35 @@ export default function PreferencesPage() {
   return (
     <div
       className={cx(
-        'min-h-screen py-10 transition-colors duration-300',
+        'min-h-screen py-12 pt-28 pb-16 transition-colors duration-300',
         theme.pageBg,
       )}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className={`flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between ${isRTL ? 'text-right' : 'text-left'}`}>
           <div className="space-y-2">
-            <h1 className={cx('text-3xl font-bold', theme.textPrimary)}>
-              {language === 'fa' ? 'تنظیمات و ترجیحات' : 'Settings & Preferences'}
-            </h1>
-            <p className={cx(theme.textSecondary)}>
+            <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+              <h1
+                className="text-3xl font-display leading-tight text-ink dark:text-white"
+              >
+                {language === 'fa' ? 'تنظیمات و ترجیحات' : 'Settings & Preferences'}
+              </h1>
+              <Link
+                href="/profile"
+                className={backButtonClasses}
+                aria-label={language === 'fa' ? 'بازگشت به پروفایل' : 'Back to profile'}
+              >
+                {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+              </Link>
+            </div>
+            <p className="font-body text-base text-ink/70 dark:text-white/80">
               {language === 'fa'
-                ? 'تنظیمات اعلان‌ها، ظاهر برنامه و حریم خصوصی خود را مدیریت کنید.'
-                : 'Manage your notifications, app appearance, and privacy preferences.'}
+                ? 'تنظیمات اعلان‌ها و حریم خصوصی خود را مدیریت کنید.'
+                : 'Manage your notifications and privacy preferences.'}
             </p>
           </div>
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center mt-2">
             {feedback ? (
               <div
                 className={cx(
@@ -525,9 +520,9 @@ export default function PreferencesPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="mt-10 grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="space-y-4">
-            <h2 className={cx('text-sm font-semibold', theme.summaryHelper)}>
+            <h2 className={cx('text-sm font-display', theme.summaryHelper)}>
               {language === 'fa' ? 'خلاصه تنظیمات' : 'Preferences summary'}
             </h2>
 
@@ -538,24 +533,10 @@ export default function PreferencesPage() {
                     <Bell className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className={cx('text-sm font-semibold', theme.summaryTextPrimary)}>
+                    <p className={cx('text-sm font-display', theme.summaryTextPrimary)}>
                       {language === 'fa' ? 'اعلان‌ها' : 'Notifications'}
                     </p>
-                    <p className={cx('text-xs', theme.summaryTextSecondary)}>{notificationsSummary}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className={cx('rounded-3xl p-5', theme.summaryCard, theme.summaryCardShadow)}>
-                <div className="flex items-center gap-3">
-                  <span className={cx('flex h-10 w-10 items-center justify-center rounded-2xl', theme.summaryIcon)}>
-                    <SunMedium className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className={cx('text-sm font-semibold', theme.summaryTextPrimary)}>
-                      {language === 'fa' ? 'ظاهر' : 'Appearance'}
-                    </p>
-                    <p className={cx('text-xs', theme.summaryTextSecondary)}>{appearanceSummary}</p>
+                    <p className={cx('text-xs font-body', theme.summaryTextSecondary)}>{notificationsSummary}</p>
                   </div>
                 </div>
               </div>
@@ -566,10 +547,10 @@ export default function PreferencesPage() {
                     <Globe2 className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className={cx('text-sm font-semibold', theme.summaryTextPrimary)}>
+                    <p className={cx('text-sm font-display', theme.summaryTextPrimary)}>
                       {language === 'fa' ? 'زبان' : 'Language'}
                     </p>
-                    <p className={cx('text-xs', theme.summaryTextSecondary)}>{languageSummary}</p>
+                    <p className={cx('text-xs font-body', theme.summaryTextSecondary)}>{languageSummary}</p>
                   </div>
                 </div>
               </div>
@@ -585,7 +566,7 @@ export default function PreferencesPage() {
                 >
                   <Lightbulb className="h-4 w-4" />
                 </span>
-                <p className={cx('text-xs', theme.highlightText)}>
+                <p className={cx('text-xs font-body', theme.highlightText)}>
                   {language === 'fa'
                     ? 'تغییرات شما به صورت خودکار در همه دستگاه‌ها اعمال می‌شود.'
                     : 'Your changes will sync automatically across all devices.'}
@@ -598,10 +579,10 @@ export default function PreferencesPage() {
             <div className={cx('rounded-3xl p-6 transition-colors duration-300', theme.sectionCard, theme.sectionShadow)}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className={cx('text-lg font-semibold', theme.sectionTitle)}>
+                  <h2 className={cx('text-lg font-display', theme.sectionTitle)}>
                     {language === 'fa' ? 'اعلان‌ها' : 'Notifications'}
                   </h2>
-                  <p className={cx('text-sm', theme.sectionSubtitle)}>
+                  <p className={cx('text-sm font-body', theme.sectionSubtitle)}>
                     {language === 'fa'
                       ? 'مدیریت کنید چه زمانی و از چه طریقی اعلان دریافت کنید.'
                       : 'Choose how and when Karju keeps you updated.'}
@@ -657,98 +638,10 @@ export default function PreferencesPage() {
             <div className={cx('rounded-3xl p-6 transition-colors duration-300', theme.sectionCard, theme.sectionShadow)}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className={cx('text-lg font-semibold', theme.sectionTitle)}>
-                    {language === 'fa' ? 'ظاهر برنامه' : 'Appearance'}
-                  </h2>
-                  <p className={cx('text-sm', theme.sectionSubtitle)}>
-                    {language === 'fa'
-                      ? 'قالب مورد علاقه خود را برای استفاده از کارجو انتخاب کنید.'
-                      : 'Pick the look and feel that fits you best.'}
-                  </p>
-                </div>
-                <span className={cx('flex h-10 w-10 items-center justify-center rounded-2xl', theme.iconBadge)}>
-                  <SunMedium className="h-5 w-5" />
-                </span>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => handleThemeChange(false)}
-                  className={cx(
-                    'flex items-center justify-between rounded-3xl border px-5 py-4 text-left transition',
-                    !preferences.appearance.darkMode
-                      ? theme.languageOptionActive
-                      : cx(theme.languageOption, theme.languageOptionHover),
-                  )}
-                >
-                  <div>
-                    <p className={cx('font-semibold', theme.sectionTitle)}>
-                      {language === 'fa' ? 'قالب روشن' : 'Light mode'}
-                    </p>
-                    <p className={cx('mt-1 text-sm', theme.sectionSubtitle)}>
-                      {language === 'fa'
-                        ? 'نمایش با پس‌زمینه روشن و المان‌های پررنگ'
-                        : 'A bright interface with crisp contrast'}
-                    </p>
-                  </div>
-                  <span
-                    className={cx(
-                      'ml-4 flex h-6 w-6 items-center justify-center rounded-full border transition-colors',
-                      !preferences.appearance.darkMode
-                        ? 'border-transparent bg-primary-600 text-white'
-                        : isDark
-                        ? 'border-white/15 text-[#94a3c6]'
-                        : 'border-neutral-300 text-neutral-400',
-                    )}
-                  >
-                    {!preferences.appearance.darkMode ? '✓' : ''}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleThemeChange(true)}
-                  className={cx(
-                    'flex items-center justify-between rounded-3xl border px-5 py-4 text-left transition',
-                    preferences.appearance.darkMode
-                      ? theme.languageOptionActive
-                      : cx(theme.languageOption, theme.languageOptionHover),
-                  )}
-                >
-                  <div>
-                    <p className={cx('font-semibold', theme.sectionTitle)}>
-                      {language === 'fa' ? 'حالت تاریک' : 'Dark mode'}
-                    </p>
-                    <p className={cx('mt-1 text-sm', theme.sectionSubtitle)}>
-                      {language === 'fa'
-                        ? 'ایده‌آل برای محیط‌های کم‌نور و استفاده طولانی‌مدت'
-                        : 'Perfect for low-light and evening shifts'}
-                    </p>
-                  </div>
-                  <span
-                    className={cx(
-                      'ml-4 flex h-6 w-6 items-center justify-center rounded-full border transition-colors',
-                      preferences.appearance.darkMode
-                        ? 'border-transparent bg-primary-600 text-white'
-                        : isDark
-                        ? 'border-white/15 text-[#94a3c6]'
-                        : 'border-neutral-300 text-neutral-400',
-                    )}
-                  >
-                    {preferences.appearance.darkMode ? '✓' : ''}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div className={cx('rounded-3xl p-6 transition-colors duration-300', theme.sectionCard, theme.sectionShadow)}>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h2 className={cx('text-lg font-semibold', theme.sectionTitle)}>
+                  <h2 className={cx('text-lg font-display', theme.sectionTitle)}>
                     {language === 'fa' ? 'زبان' : 'Language'}
                   </h2>
-                  <p className={cx('text-sm', theme.sectionSubtitle)}>
+                  <p className={cx('text-sm font-body', theme.sectionSubtitle)}>
                     {language === 'fa'
                       ? 'زبان رابط کاربری را انتخاب کنید.'
                       : 'Pick the language you prefer to use in Karju.'}
@@ -771,8 +664,8 @@ export default function PreferencesPage() {
                   )}
                 >
                   <div>
-                    <p className={cx('font-semibold', theme.sectionTitle)}>فارسی</p>
-                    <p className={cx('mt-1 text-sm', theme.sectionSubtitle)}>
+                    <p className={cx('font-display', theme.sectionTitle)}>فارسی</p>
+                    <p className={cx('mt-1 text-sm font-body', theme.sectionSubtitle)}>
                       {language === 'fa'
                         ? 'برای تجربه کامل فارسی'
                         : 'Enjoy the full experience in Persian'}
@@ -780,12 +673,12 @@ export default function PreferencesPage() {
                   </div>
                   <span
                     className={cx(
-                      'ml-4 flex h-6 w-6 items-center justify-center rounded-full border transition-colors',
+                      'ml-4 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors font-bold',
                       preferences.language === 'fa'
-                        ? 'border-transparent bg-primary-600 text-white'
+                        ? 'border-ink bg-moss text-concrete'
                         : isDark
-                        ? 'border-white/15 text-[#94a3c6]'
-                        : 'border-neutral-300 text-neutral-400',
+                        ? 'border-concrete text-ink'
+                        : 'border-ink/30 text-ink/40',
                     )}
                   >
                     {preferences.language === 'fa' ? '✓' : ''}
@@ -796,15 +689,15 @@ export default function PreferencesPage() {
                   type="button"
                   onClick={() => handleLanguageChange('en')}
                   className={cx(
-                    'flex items-center justify-between rounded-3xl border px-5 py-4 transition text-left',
+                    'flex items-center justify-between rounded-3xl border-2 px-5 py-4 transition-all text-left',
                     preferences.language === 'en'
                       ? theme.languageOptionActive
                       : cx(theme.languageOption, theme.languageOptionHover),
                   )}
                 >
                   <div>
-                    <p className={cx('font-semibold', theme.sectionTitle)}>English</p>
-                    <p className={cx('mt-1 text-sm', theme.sectionSubtitle)}>
+                    <p className={cx('font-display', theme.sectionTitle)}>English</p>
+                    <p className={cx('mt-1 text-sm font-body', theme.sectionSubtitle)}>
                       {language === 'fa'
                         ? 'برای استفاده از نسخه انگلیسی کارجو'
                         : 'Switch to the English interface'}
@@ -812,12 +705,12 @@ export default function PreferencesPage() {
                   </div>
                   <span
                     className={cx(
-                      'ml-4 flex h-6 w-6 items-center justify-center rounded-full border transition-colors',
+                      'ml-4 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors font-bold',
                       preferences.language === 'en'
-                        ? 'border-transparent bg-primary-600 text-white'
+                        ? 'border-ink bg-moss text-concrete'
                         : isDark
-                        ? 'border-white/15 text-[#94a3c6]'
-                        : 'border-neutral-300 text-neutral-400',
+                        ? 'border-concrete text-ink'
+                        : 'border-ink/30 text-ink/40',
                     )}
                   >
                     {preferences.language === 'en' ? '✓' : ''}

@@ -1,34 +1,42 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Navbar from '@/components/Navbar'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import type { Metadata } from 'next';
+import { Lalezar, Vazirmatn } from 'next/font/google';
+import './globals.css';
+import Navbar from '@/components/Navbar';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
-const inter = Inter({ subsets: ['latin'] })
+const lalezar = Lalezar({
+  weight: '400',
+  subsets: ['arabic'],
+  variable: '--font-lalezar',
+  display: 'swap',
+});
+
+const vazirmatn = Vazirmatn({
+  subsets: ['arabic'],
+  variable: '--font-vazirmatn',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'Karju - Shift-based Work Marketplace',
-  description: 'The first Iranian online marketplace for shifts and temporary jobs',
-}
+  title: 'Karava | کاراوا',
+  description: 'اولین بازار آنلاین کار شیفتی در ایران',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="fa" dir="rtl">
+      <body
+        className={`${lalezar.variable} ${vazirmatn.variable} font-body bg-concrete dark:bg-ink text-ink dark:text-concrete selection:bg-safety dark:selection:bg-safety selection:text-ink dark:selection:text-ink transition-colors duration-300`}
+      >
         <LanguageProvider>
           <Navbar />
-          <main className="min-h-screen bg-gray-50">
-            {children}
-          </main>
+          <main className="min-h-screen">{children}</main>
         </LanguageProvider>
       </body>
     </html>
-  )
+  );
 }
-
-
-

@@ -13,8 +13,8 @@ import dynamic from 'next/dynamic';
 const ShiftsMap = dynamic(() => import('@/components/ShiftsMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-      <div className="text-gray-500">در حال بارگذاری نقشه...</div>
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-concrete rounded-lg">
+      <div className="text-gray-500 dark:text-white">در حال بارگذاری نقشه...</div>
     </div>
   ),
 });
@@ -417,33 +417,33 @@ export default function ShiftsPage() {
   }, [shifts, filters.industry, userLocation, filters.distance]);
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9]" dir="rtl">
+    <div className="min-h-screen bg-concrete dark:bg-ink pt-24" dir="rtl">
       <div className="flex gap-6 p-6 h-screen overflow-hidden">
         {/* Filters - Left side */}
-        <div className="w-[337px] bg-white border-l border-gray-200 flex-shrink-0 overflow-y-auto">
+        <div className="w-[337px] bg-white dark:bg-concrete-light border-l-2 border-ink dark:border-concrete flex-shrink-0 overflow-y-auto">
           <div className="p-6 pt-6 flex flex-col gap-8">
           {/* Calendar */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() => changePersianMonth('prev')}
-                className="p-1 hover:bg-gray-100 rounded-[4px] size-7 flex items-center justify-center"
+                className="p-1 hover:bg-concrete-dark dark:hover:bg-concrete rounded-[4px] size-7 flex items-center justify-center"
               >
-                <ChevronLeft className="w-5 h-5 text-[#4A5565]" />
+                <ChevronLeft className="w-5 h-5 text-ink dark:text-ink" />
               </button>
-              <h3 className="font-bold text-base text-gray-900">{getPersianMonthName(calendarMonth)}</h3>
+              <h3 className="font-bold text-base text-ink dark:text-ink font-display">{getPersianMonthName(calendarMonth)}</h3>
               <button
                 onClick={() => changePersianMonth('next')}
-                className="p-1 hover:bg-gray-100 rounded-[4px] size-7 flex items-center justify-center"
+                className="p-1 hover:bg-concrete-dark dark:hover:bg-concrete rounded-[4px] size-7 flex items-center justify-center"
               >
-                <ChevronRight className="w-5 h-5 text-[#4A5565]" />
+                <ChevronRight className="w-5 h-5 text-ink dark:text-ink" />
               </button>
             </div>
             
             {/* Week days */}
             <div className="grid grid-cols-7 gap-0 mb-1">
               {persianWeekDays.map((day, idx) => (
-                <div key={idx} className="text-center text-xs text-[#6a7282] font-normal py-1.5">
+                <div key={idx} className="text-center text-xs text-ink/70 dark:text-ink/80 font-bold py-1.5">
                   {day}
                 </div>
               ))}
@@ -462,12 +462,12 @@ export default function ShiftsPage() {
                   <button
                     key={dayInfo.gregorianDate.toISOString()}
                     onClick={() => setSelectedDate(dayInfo.gregorianDate)}
-                    className={`h-10 rounded-[4px] text-sm transition-colors flex items-center justify-center ${
+                    className={`h-10 rounded-[4px] text-sm transition-colors flex items-center justify-center font-bold ${
                       isSelected 
-                        ? 'bg-[rgba(26,37,162,0.55)] text-black' 
+                        ? 'bg-moss text-concrete shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]' 
                         : isToday
-                        ? 'bg-[rgba(60,224,0,0)] text-black'
-                        : 'text-[#101828] hover:bg-gray-100'
+                        ? 'bg-safety/20 dark:bg-safety/30 text-ink dark:text-ink border-2 border-safety'
+                        : 'text-ink dark:text-ink hover:bg-concrete-dark dark:hover:bg-concrete'
                     }`}
                   >
                     {dayNumber}
@@ -478,7 +478,7 @@ export default function ShiftsPage() {
           </div>
 
           {/* Basic Filters - Always Visible */}
-          <div className="pt-6 border-t border-gray-200">
+          <div className="pt-6 border-t-2 border-ink/20 dark:border-ink/30">
             <div className="flex items-center justify-between mb-6">
               <button 
                 onClick={() => {
@@ -491,20 +491,20 @@ export default function ShiftsPage() {
                   });
                   setSelectedDate(null);
                 }}
-                className="text-xs text-[#6750a4] font-normal hover:underline"
+                className="text-xs text-safety font-bold hover:underline"
               >
                 {language === 'fa' ? 'پاک کردن' : 'Clear'}
               </button>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base text-gray-900">{language === 'fa' ? 'فیلترها' : 'Filters'}</h3>
-                <Filter className="w-5 h-5 text-[#6750A4]" />
+                <h3 className="font-bold text-base text-ink dark:text-ink font-display">{language === 'fa' ? 'فیلترها' : 'Filters'}</h3>
+                <Filter className="w-5 h-5 text-safety" />
               </div>
             </div>
 
             <div className="space-y-4">
               {/* Location - Basic Filter */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-900 mb-2 opacity-70">
+                <label className="block text-sm font-bold text-ink dark:text-ink mb-2 opacity-70 dark:opacity-100">
                   {language === 'fa' ? 'محل' : 'Location'}
                 </label>
                 <input
@@ -512,36 +512,36 @@ export default function ShiftsPage() {
                   value={filters.location}
                   onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                   placeholder={language === 'fa' ? 'تهران، منطقه ۱' : 'Tehran, District 1'}
-                  className="w-full h-[42px] px-4 py-2 bg-white border border-[#d1d5dc] rounded-[10px] text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-[42px] px-4 py-2 bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete rounded-[10px] text-base text-ink dark:text-ink focus:outline-none focus:ring-2 focus:ring-safety focus:border-safety font-body"
                 />
               </div>
 
               {/* Distance */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-bold text-gray-900 opacity-70">
+                  <label className="text-sm font-bold text-ink dark:text-ink opacity-70 dark:opacity-100">
                     {language === 'fa' ? 'فاصله' : 'Distance'}
                   </label>
-                  <span className="text-xs text-gray-900 opacity-70">
+                  <span className="text-xs text-ink dark:text-ink opacity-70 dark:opacity-100 font-bold">
                     {filters.distance} {language === 'fa' ? 'کیلومتر' : 'km'}
                   </span>
                 </div>
                 <div className="relative h-1">
-                  <div className="absolute bg-gradient-to-l from-[#d1d5dc] via-[#8b5ce2] to-[#1a25a2] h-1 rounded-full w-full"></div>
+                  <div className="absolute bg-gradient-to-l from-concrete-dark via-moss to-ink h-1 rounded-full w-full"></div>
                   <input
                     type="range"
                     min="0"
                     max="50"
                     value={filters.distance}
                     onChange={(e) => setFilters({ ...filters, distance: parseInt(e.target.value) })}
-                    className="absolute w-full h-1 bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#1a25a2] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#1a25a2] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] [&::-moz-range-thumb]:cursor-pointer"
+                    className="absolute w-full h-1 bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-ink [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[2px_2px_0px_0px_#1a1a1a] [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-ink [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:shadow-[2px_2px_0px_0px_#1a1a1a] [&::-moz-range-thumb]:cursor-pointer"
                   />
                 </div>
               </div>
 
               {/* Employer */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-900 mb-2 opacity-70">
+                <label className="block text-sm font-bold text-ink dark:text-ink mb-2 opacity-70 dark:opacity-100">
                   {language === 'fa' ? 'کارفرما' : 'Employer'}
                 </label>
                 <input
@@ -549,13 +549,13 @@ export default function ShiftsPage() {
                   value={filters.employer}
                   onChange={(e) => setFilters({ ...filters, employer: e.target.value })}
                   placeholder={language === 'fa' ? 'نام کارفرما' : 'Employer Name'}
-                  className="w-full h-[42px] px-4 py-2 bg-white border border-[#d1d5dc] rounded-[10px] text-base text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-[42px] px-4 py-2 bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete rounded-[10px] text-base text-ink/70 dark:text-ink focus:outline-none focus:ring-2 focus:ring-safety focus:border-safety font-body"
                 />
               </div>
 
               {/* Industry Type - Basic Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2 opacity-70">
+                <label className="block text-sm font-bold text-ink dark:text-ink mb-2 opacity-70 dark:opacity-100">
                   {language === 'fa' ? 'نوع صنعت' : 'Industry Type'}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -563,10 +563,10 @@ export default function ShiftsPage() {
                     <button
                       key={type.value}
                       onClick={() => setFilters({ ...filters, industry: type.value })}
-                      className={`px-4 py-2 rounded-[5px] text-base font-bold transition-colors ${
+                      className={`px-4 py-2 rounded-lg text-base font-bold transition-all border-2 ${
                         filters.industry === type.value
-                          ? 'bg-[rgba(26,37,162,0.4)] text-gray-900 border-[1.5px] border-[#1a25a2] opacity-75'
-                          : 'bg-[rgba(26,37,162,0.1)] text-gray-900'
+                          ? 'bg-moss text-concrete border-ink dark:border-concrete shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]'
+                          : 'bg-concrete-dark dark:bg-concrete-light text-ink dark:text-ink border-ink dark:border-concrete hover:bg-concrete dark:hover:bg-concrete'
                       }`}
                     >
                       {type.label}
@@ -582,13 +582,13 @@ export default function ShiftsPage() {
         {/* Main Content Area - Right side */}
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Toggle Map/List View */}
-          <div className="flex items-center justify-end gap-2 bg-white p-2 rounded-lg">
+          <div className="flex items-center justify-end gap-2 bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete p-2 rounded-xl shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]">
             <button
               onClick={() => setShowMap(!showMap)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-bold border-2 ${
                 showMap 
-                  ? 'bg-[#1a25a2] text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-ink dark:bg-safety text-white dark:text-ink border-ink dark:border-safety shadow-[2px_2px_0px_0px_#ff5e00]' 
+                  : 'bg-concrete-dark dark:bg-concrete text-ink dark:text-ink border-ink dark:border-concrete hover:bg-concrete dark:hover:bg-concrete-light'
               }`}
             >
               <Map className="w-4 h-4" />
@@ -598,7 +598,7 @@ export default function ShiftsPage() {
 
           {/* Map or List View */}
           {showMap ? (
-            <div className="flex-1 bg-white rounded-lg shadow-sm overflow-hidden relative" style={{ zIndex: 1 }}>
+            <div className="flex-1 bg-white dark:bg-concrete-light rounded-lg shadow-sm overflow-hidden relative" style={{ zIndex: 1 }}>
               <ShiftsMap 
                 shifts={allShiftsForMap}
                 selectedShiftId={selectedShiftId}
@@ -613,12 +613,12 @@ export default function ShiftsPage() {
             <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-              <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-ink dark:border-ink"></div>
+              <p className="mt-4 text-ink dark:text-ink font-bold">{t('common.loading')}</p>
             </div>
           ) : Object.keys(filteredGroupedShifts).length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">{t('shifts.noShiftsFound')}</p>
+              <p className="text-ink dark:text-ink text-lg font-bold">{t('shifts.noShiftsFound')}</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -628,7 +628,7 @@ export default function ShiftsPage() {
                   const date = new Date(dateKey);
                   return (
                     <div key={dateKey}>
-                      <h2 className="text-xl font-bold mb-6 text-gray-800 text-right" dir="rtl">
+                      <h2 className="text-xl font-bold mb-6 text-ink dark:text-ink text-right font-display" dir="rtl">
                         {getPersianDateLabel(date)}
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" dir="rtl">
@@ -642,14 +642,14 @@ export default function ShiftsPage() {
                               key={shift.id}
                               id={`shift-${shift.id}`}
                               href={`/shifts/${shift.id}`}
-                              className={`bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] overflow-hidden hover:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] transition-shadow ${
-                                selectedShiftId === shift.id ? 'ring-2 ring-[#1a25a2]' : ''
+                              className={`bg-white dark:bg-concrete-light rounded-[20px] border-2 border-ink dark:border-concrete shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9] overflow-hidden hover:shadow-[6px_6px_0px_0px_#1a1a1a] dark:hover:shadow-[6px_6px_0px_0px_#e0ded9] hover:-translate-y-1 transition-all ${
+                                selectedShiftId === shift.id ? 'ring-2 ring-safety border-safety' : ''
                               }`}
                               onMouseEnter={() => setSelectedShiftId(shift.id)}
                               onMouseLeave={() => setSelectedShiftId(undefined)}
                             >
                               <div className="relative">
-                                <div className="w-full h-[200px] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center overflow-hidden">
+                                <div className="w-full h-[200px] bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
                                   {shift.image_url ? (
                                     <img
                                       src={shift.image_url}
@@ -661,31 +661,31 @@ export default function ShiftsPage() {
                                       }}
                                     />
                                   ) : null}
-                                  <div className={`absolute inset-0 flex items-center justify-center text-gray-400 text-6xl ${shift.image_url ? 'hidden' : ''}`}>
+                                  <div className={`absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-6xl ${shift.image_url ? 'hidden' : ''}`}>
                                     🏢
                                   </div>
                                 </div>
                                 {hasLowApplicants && (
-                                  <div className="absolute top-3 right-3 bg-[rgba(255,255,255,0.9)] text-gray-900 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
+                                  <div className="absolute top-3 right-3 bg-white dark:bg-concrete-light border-2 border-ink dark:border-concrete text-ink dark:text-ink px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]">
                                     <span>{language === 'fa' ? 'متقاضی کم' : 'Low Applicants'}</span>
-                                    <div className="w-2 h-2 bg-[#1a25a2] rounded-full"></div>
+                                    <div className="w-2 h-2 bg-safety rounded-full"></div>
                                   </div>
                                 )}
                               </div>
                               <div className="p-4 h-[157px] flex flex-col justify-between" dir="rtl">
                                 {/* Title: Business Name - Neighborhood */}
                                 <div>
-                                  <h3 className="font-bold text-lg mb-2 text-gray-900 text-right">
+                                  <h3 className="font-bold text-lg mb-2 text-ink dark:text-ink text-right font-display">
                                     {shift.business_name || 'فروشگاه'} - {getNeighborhood(shift.location)}
                                   </h3>
                                   
-                                  {/* Position with purple color and distance */}
+                                  {/* Position with moss color and distance */}
                                   <div className="flex items-center gap-1.5 mb-3">
-                                    <p className="text-[#1a25a2] text-base font-normal">{getRole(shift)}</p>
+                                    <p className="text-moss dark:text-safety text-base font-bold">{getRole(shift)}</p>
                                     {distance !== null && (
                                       <>
-                                        <span className="text-[#1a25a2]">·</span>
-                                        <span className="text-[#1a25a2] text-base font-normal">
+                                        <span className="text-ink dark:text-ink">·</span>
+                                        <span className="text-ink dark:text-ink text-base font-bold">
                                           {formatPersianNumber(distance.toFixed(1))} کیلومتر
                                         </span>
                                       </>
@@ -693,16 +693,16 @@ export default function ShiftsPage() {
                                   </div>
                                   
                                   {/* Hourly Rate (right) and Time (left) */}
-                                  <div className="flex items-center justify-between mb-3 opacity-70" dir="rtl">
+                                  <div className="flex items-center justify-between mb-3 opacity-70 dark:opacity-100" dir="rtl">
                                     <div className="text-right">
-                                      <span className="text-base text-gray-900">
+                                      <span className="text-base text-ink dark:text-ink font-bold">
                                         {language === 'fa' 
                                           ? `ت ${formatPersianNumber(Math.floor(shift.hourly_wage / 10).toLocaleString())}/ساعت`
                                           : `${Math.floor(shift.hourly_wage / 10).toLocaleString()} T / hour`}
                                       </span>
                                     </div>
                                     <div className="text-left">
-                                      <span className="text-base text-gray-900">
+                                      <span className="text-base text-ink dark:text-ink font-bold">
                                         {language === 'fa' 
                                           ? `${formatPersianTime(shift.start_time)} - ${formatPersianTime(shift.end_time)}`
                                           : `${shift.start_time} - ${shift.end_time}`}
@@ -712,8 +712,8 @@ export default function ShiftsPage() {
                                 </div>
                                 
                                 {/* Estimated Income at bottom */}
-                                <div className="text-right opacity-60" dir="rtl">
-                                  <p className="text-xs text-gray-900">
+                                <div className="text-right opacity-60 dark:opacity-100" dir="rtl">
+                                  <p className="text-xs text-ink dark:text-ink font-bold">
                                     {language === 'fa' ? `برآورد درامد  ${formatPersianCurrencyTomans(estimatedIncome).replace(' تومان', '')}` : `Estimated Income: ${formatPersianCurrencyTomans(estimatedIncome)}`}
                                   </p>
                                 </div>

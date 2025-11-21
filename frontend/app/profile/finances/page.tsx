@@ -12,7 +12,16 @@ import {
   gregorianToJalali,
   toPersianNum,
 } from '@/lib/persianUtils';
-import { ArrowRight, Download, TrendingUp, Wallet, PiggyBank, CalendarRange, Info } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Download,
+  TrendingUp,
+  Wallet,
+  PiggyBank,
+  CalendarRange,
+  Info,
+} from 'lucide-react';
 
 type ChartPoint = {
   label: string;
@@ -47,6 +56,7 @@ const monthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth() + 1}`;
 export default function WorkerFinancesPage() {
   const router = useRouter();
   const { language } = useLanguage();
+  const isRTL = language === 'fa';
   const [user, setUser] = useState<any>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -271,10 +281,10 @@ export default function WorkerFinancesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center">
+      <div className="min-h-screen bg-concrete flex items-center justify-center pt-24">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-          <p className="text-primary-700 mt-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-ink" />
+          <p className="text-ink font-bold mt-4 font-body">
             {language === 'fa' ? 'در حال بارگذاری اطلاعات مالی...' : 'Loading financial data...'}
           </p>
         </div>
@@ -288,33 +298,32 @@ export default function WorkerFinancesPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f9f9f9] text-neutral-900"
+      className="min-h-screen bg-concrete dark:bg-ink text-ink dark:text-concrete pt-28 pb-12"
       dir={language === 'fa' ? 'rtl' : 'ltr'}
     >
-      <div className="bg-gradient-to-b from-[#5b21b6] to-[#1a25a2] text-white">
+      <div className="bg-gradient-to-b from-ink to-moss text-concrete border-b-4 border-safety">
         <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => router.push('/profile')}
-                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 p-2 hover:bg-white/20 transition"
-                aria-label={language === 'fa' ? 'بازگشت' : 'Back'}
-              >
-                <ArrowRight className={`w-5 h-5 ${language === 'fa' ? '' : 'rotate-180'}`} />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold">
+          <div className={`flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className="space-y-2">
+              <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'}`}>
+                <h1 className="text-3xl font-display">
                   {language === 'fa' ? 'امور مالی من' : 'My Finances'}
                 </h1>
-                <p className="text-white/80">
-                  {language === 'fa'
-                    ? 'وضعیت درآمد و پرداخت‌های خود را در یک نگاه مشاهده کنید'
-                    : 'Track your income, payouts and financial performance at a glance'}
-                </p>
+                <Link
+                  href="/profile"
+                  className="inline-flex items-center justify-center w-14 h-14 rounded-full border-[3px] border-concrete text-concrete bg-transparent hover:bg-white/10 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)]"
+                  aria-label={language === 'fa' ? 'بازگشت به پروفایل' : 'Back to profile'}
+                >
+                  {isRTL ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
+                </Link>
               </div>
+              <p className={`text-concrete-dark font-body ${isRTL ? 'text-right' : 'text-left'}`}>
+                {language === 'fa'
+                  ? 'وضعیت درآمد و پرداخت‌های خود را در یک نگاه مشاهده کنید'
+                  : 'Track your income, payouts and financial performance at a glance'}
+              </p>
             </div>
-            <div className="hidden sm:flex items-center gap-3 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm">
+            <div className="hidden sm:flex items-center gap-3 bg-concrete/20 border-2 border-concrete rounded-full px-4 py-2 text-sm font-bold">
               <CalendarRange className="w-4 h-4" />
               <span>
                 {language === 'fa' ? 'این ماه' : 'This month'}
@@ -323,13 +332,21 @@ export default function WorkerFinancesPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            <MetricCard
-              icon={<Wallet className="w-6 h-6" />}
-              title={language === 'fa' ? 'در انتظار پرداخت' : 'Pending payout'}
-              helper={language === 'fa' ? 'پرداخت بعدی آخر ماه واریز می‌شود' : 'Next payout scheduled for end of month'}
-              value={formatAmount(pendingPayout)}
-              accent="from-white/20 to-white/10"
-            />
+            <div className="relative overflow-hidden rounded-[2rem] border-2 border-concrete bg-gradient-to-br from-safety/30 via-safety/20 to-moss/30 p-6 shadow-[4px_4px_0px_0px_#1a1a1a] dark:from-safety/20 dark:via-safety/10 dark:to-moss/20 dark:shadow-[4px_4px_0px_0px_#e0ded9]">
+              <div className="absolute inset-0 bg-concrete/5 dark:bg-ink/10" />
+              <div className="relative space-y-4">
+                <div className="inline-flex items-center justify-center rounded-full bg-concrete/20 border-2 border-concrete p-3 text-concrete dark:bg-concrete-light/30 dark:border-concrete dark:text-ink">
+                  <Wallet className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-concrete-dark font-body dark:text-ink/80">{language === 'fa' ? 'در انتظار پرداخت' : 'Pending payout'}</p>
+                  <p className="text-3xl font-display mt-1 text-concrete dark:text-ink">{formatAmount(pendingPayout)}</p>
+                </div>
+                <p className="text-xs text-concrete-dark font-body dark:text-ink/80">
+                  {language === 'fa' ? 'پرداخت بعدی آخر ماه واریز می‌شود' : 'Next payout scheduled for end of month'}
+                </p>
+              </div>
+            </div>
             <MetricCard
               icon={<TrendingUp className="w-6 h-6" />}
               title={language === 'fa' ? 'درآمد این ماه' : 'Monthly income'}
@@ -339,7 +356,7 @@ export default function WorkerFinancesPage() {
                   : `Change vs last month ${monthlyGrowth.toFixed(1)}%`
               }
               value={formatAmount(monthlyIncome)}
-              accent="from-[#00D4AA] to-[#00D4AA]/60"
+              accent="from-moss to-moss/80"
               chipLabel={
                 monthlyGrowth >= 0
                   ? language === 'fa'
@@ -351,38 +368,46 @@ export default function WorkerFinancesPage() {
               }
               chipTone={monthlyGrowth >= 0 ? 'positive' : 'negative'}
             />
-            <MetricCard
-              icon={<PiggyBank className="w-6 h-6" />}
-              title={language === 'fa' ? 'کل درآمد' : 'Total earnings'}
-              helper={language === 'fa' ? 'مجموع درآمد تأیید شده شما' : 'All confirmed earnings to date'}
-              value={formatAmount(totalIncome)}
-              accent="from-white/20 to-white/10"
-            />
+            <div className="relative overflow-hidden rounded-[2rem] border-2 border-concrete bg-gradient-to-br from-moss/30 via-moss/20 to-safety/30 p-6 shadow-[4px_4px_0px_0px_#1a1a1a] dark:from-moss/20 dark:via-moss/10 dark:to-safety/20 dark:shadow-[4px_4px_0px_0px_#e0ded9]">
+              <div className="absolute inset-0 bg-concrete/5 dark:bg-ink/10" />
+              <div className="relative space-y-4">
+                <div className="inline-flex items-center justify-center rounded-full bg-concrete/20 border-2 border-concrete p-3 text-concrete dark:bg-concrete-light/30 dark:border-concrete dark:text-ink">
+                  <PiggyBank className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-concrete-dark font-body dark:text-ink/80">{language === 'fa' ? 'کل درآمد' : 'Total earnings'}</p>
+                  <p className="text-3xl font-display mt-1 text-concrete dark:text-ink">{formatAmount(totalIncome)}</p>
+                </div>
+                <p className="text-xs text-concrete-dark font-body dark:text-ink/80">
+                  {language === 'fa' ? 'مجموع درآمد تأیید شده شما' : 'All confirmed earnings to date'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-        <section className="bg-white rounded-[20px] shadow-[0px_10px_30px_-20px_rgba(26,37,162,0.35)] border border-gray-100 overflow-hidden">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-6 py-5 border-b border-gray-100">
+        <section className="bg-white dark:bg-concrete-light rounded-[2rem] shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9] border-2 border-ink dark:border-concrete overflow-hidden">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-6 py-5 border-b-2 border-ink dark:border-concrete">
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-display text-ink dark:text-ink">
                 {language === 'fa' ? 'نمودار درآمد' : 'Income chart'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink/70 dark:text-ink/80 font-body">
                 {language === 'fa'
                   ? 'نمای کلی از درآمد شما در بازه‌های زمانی مختلف'
                   : 'Overview of your earnings across different time ranges'}
               </p>
             </div>
-            <div className="inline-flex items-center gap-2 bg-gray-100 rounded-full p-1">
+            <div className="inline-flex items-center gap-2 bg-concrete-dark dark:bg-concrete-light border-2 border-ink dark:border-concrete rounded-full p-1">
               <button
                 type="button"
                 onClick={() => setChartView('monthly')}
-                className={`px-4 py-2 text-sm font-medium rounded-full transition ${
+                className={`px-4 py-2 text-sm font-bold rounded-full transition-all ${
                   chartView === 'monthly'
-                    ? 'bg-white shadow text-[#1a25a2]'
-                    : 'text-gray-600'
+                    ? 'bg-ink dark:bg-safety text-concrete dark:text-ink shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]'
+                    : 'text-ink dark:text-ink hover:bg-concrete dark:hover:bg-concrete'
                 }`}
               >
                 {language === 'fa' ? 'ماهانه' : 'Monthly'}
@@ -390,10 +415,10 @@ export default function WorkerFinancesPage() {
               <button
                 type="button"
                 onClick={() => setChartView('weekly')}
-                className={`px-4 py-2 text-sm font-medium rounded-full transition ${
+                className={`px-4 py-2 text-sm font-bold rounded-full transition-all ${
                   chartView === 'weekly'
-                    ? 'bg-white shadow text-[#1a25a2]'
-                    : 'text-gray-600'
+                    ? 'bg-ink dark:bg-safety text-concrete dark:text-ink shadow-[2px_2px_0px_0px_#1a1a1a] dark:shadow-[2px_2px_0px_0px_#e0ded9]'
+                    : 'text-ink dark:text-ink hover:bg-concrete dark:hover:bg-concrete'
                 }`}
               >
                 {language === 'fa' ? 'هفتگی' : 'Weekly'}
@@ -402,15 +427,15 @@ export default function WorkerFinancesPage() {
           </div>
 
           <div className="px-6 pt-8 pb-6">
-            <div className="relative h-72 bg-gradient-to-b from-[#f8f8ff] to-white rounded-[16px] border border-gray-100 overflow-hidden">
+            <div className="relative h-72 bg-gradient-to-b from-concrete-dark dark:from-concrete-light to-white dark:to-concrete-light rounded-xl border-2 border-ink dark:border-concrete overflow-hidden">
               <svg viewBox="0 0 600 280" className="absolute inset-0 w-full h-full">
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#5b21b6" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#5b21b6" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#ff5e00" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#ff5e00" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <g stroke="#E5E7EB" strokeDasharray="6 8">
+                <g stroke="#1a1a1a" strokeDasharray="6 8" strokeOpacity={0.2} className="dark:stroke-concrete dark:stroke-opacity-30">
                   <line x1="0" y1="240" x2="600" y2="240" />
                   <line x1="0" y1="180" x2="600" y2="180" />
                   <line x1="0" y1="120" x2="600" y2="120" />
@@ -420,7 +445,7 @@ export default function WorkerFinancesPage() {
                   <path
                     d={areaPathWithBase}
                     fill="url(#chartGradient)"
-                    stroke="#5b21b6"
+                    stroke="#ff5e00"
                     strokeWidth={3}
                     strokeLinejoin="round"
                     strokeLinecap="round"
@@ -428,11 +453,11 @@ export default function WorkerFinancesPage() {
                 )}
                 {chartPoints.map((point) => (
                   <g key={point.label}>
-                    <circle cx={point.x} cy={point.y} r={5} fill="#1a25a2" stroke="white" strokeWidth={2} />
+                    <circle cx={point.x} cy={point.y} r={5} fill="#ff5e00" stroke="white" className="dark:stroke-concrete-light" strokeWidth={2} />
                   </g>
                 ))}
               </svg>
-              <div className="absolute bottom-4 left-0 right-0 px-6 flex justify-between text-xs text-gray-500">
+              <div className="absolute bottom-4 left-0 right-0 px-6 flex justify-between text-xs text-ink/70 dark:text-ink/80 font-bold">
                 {chartData.map((point) => (
                   <span key={point.label}>
                     {language === 'fa' ? toPersianNum(point.label) : point.label}
@@ -443,13 +468,13 @@ export default function WorkerFinancesPage() {
           </div>
         </section>
 
-        <section className="bg-white rounded-[20px] shadow-[0px_10px_30px_-20px_rgba(26,37,162,0.25)] border border-gray-100">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-6 py-5 border-b border-gray-100">
+        <section className="bg-white dark:bg-concrete-light rounded-[2rem] shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9] border-2 border-ink dark:border-concrete">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-6 py-5 border-b-2 border-ink dark:border-concrete">
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-display text-ink dark:text-ink">
                 {language === 'fa' ? 'تراکنش‌های اخیر' : 'Recent transactions'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink/70 dark:text-ink/80 font-body">
                 {language === 'fa'
                   ? 'گزارش پرداخت‌های اخیر شما در پلتفرم'
                   : 'Track the most recent payouts from your shifts'}
@@ -457,16 +482,16 @@ export default function WorkerFinancesPage() {
             </div>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-[12px] border border-[#1a25a2] px-4 py-2 text-sm font-medium text-[#1a25a2] hover:bg-[#1a25a2]/5 transition"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-ink dark:border-concrete px-4 py-2 text-sm font-bold text-ink dark:text-ink hover:bg-concrete-dark dark:hover:bg-concrete transition-all"
             >
               <Download className="w-4 h-4" />
               {language === 'fa' ? 'دانلود PDF' : 'Download PDF'}
             </button>
           </div>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y-2 divide-ink/20 dark:divide-ink/30">
             {transactions.length === 0 ? (
-              <div className="px-6 py-10 text-center text-sm text-gray-500">
+              <div className="px-6 py-10 text-center text-sm text-ink/70 dark:text-ink/80 font-body">
                 {language === 'fa'
                   ? 'هنوز تراکنشی انجام نشده است.'
                   : 'No transactions recorded yet.'}
@@ -490,22 +515,22 @@ export default function WorkerFinancesPage() {
                 return (
                   <div
                     key={tx.id}
-                    className="px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                    className="px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between hover:bg-concrete-dark dark:hover:bg-concrete transition-all"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="size-12 rounded-full bg-[#f3f4ff] text-[#1a25a2] flex items-center justify-center text-xl">
+                      <div className="size-12 rounded-full bg-moss/20 dark:bg-moss/30 border-2 border-ink dark:border-concrete text-moss dark:text-safety flex items-center justify-center text-xl font-display">
                         💼
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-sm text-gray-900">
+                          <p className="font-display text-sm text-ink dark:text-ink">
                             {language === 'fa' ? toPersianNum(tx.title) : tx.title}
                           </p>
                           <span
-                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold border-2 ${
                               tx.status === 'paid'
-                                ? 'bg-[#00d4aa]/10 text-[#0f766e]'
-                                : 'bg-yellow-100 text-yellow-700'
+                                ? 'bg-moss/20 dark:bg-moss/30 text-moss dark:text-moss border-moss dark:border-moss'
+                                : 'bg-safety/20 dark:bg-safety/30 text-safety dark:text-safety border-safety dark:border-safety'
                             }`}
                           >
                             {tx.status === 'paid'
@@ -517,7 +542,7 @@ export default function WorkerFinancesPage() {
                               : 'Pending'}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-ink/70 dark:text-ink/80 font-body">
                           {language === 'fa'
                             ? `${tx.business} • ${toPersianNum(tx.hours)} ساعت`
                             : `${tx.business} • ${tx.hours} hrs`}
@@ -525,12 +550,12 @@ export default function WorkerFinancesPage() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <p className="font-semibold text-sm text-[#1a25a2]">
+                      <p className="font-display text-sm text-moss dark:text-safety">
                         {language === 'fa'
                           ? formatPersianCurrencyTomans(tx.amount)
                           : `${tx.amount.toLocaleString('en-US')} Toman`}
                       </p>
-                      <span className="text-xs text-gray-400">{dateLabel}</span>
+                      <span className="text-xs text-ink/60 dark:text-ink/70 font-body">{dateLabel}</span>
                     </div>
                   </div>
                 );
@@ -540,11 +565,11 @@ export default function WorkerFinancesPage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="bg-white rounded-[20px] shadow-[0px_10px_30px_-20px_rgba(26,37,162,0.2)] border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold mb-3">
+          <div className="bg-white dark:bg-concrete-light rounded-[2rem] shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9] border-2 border-ink dark:border-concrete p-6">
+            <h3 className="text-lg font-display text-ink dark:text-ink mb-3">
               {language === 'fa' ? 'جزئیات پرداخت' : 'Payout details'}
             </h3>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-ink/70 dark:text-ink/80 font-body mb-6">
               {language === 'fa'
                 ? 'خلاصه‌ای از پرداخت‌های آینده و گذشته شما'
                 : 'Summary of your upcoming and previous payouts'}
@@ -606,23 +631,23 @@ export default function WorkerFinancesPage() {
             </div>
           </div>
 
-          <aside className="bg-white rounded-[20px] shadow-[0px_10px_30px_-20px_rgba(26,37,162,0.2)] border border-gray-100 p-6 space-y-4">
+          <aside className="bg-white dark:bg-concrete-light rounded-[2rem] shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9] border-2 border-ink dark:border-concrete p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full bg-[#f3f4ff] text-[#1a25a2] flex items-center justify-center">
+              <div className="size-10 rounded-full bg-safety/20 dark:bg-safety/30 border-2 border-ink dark:border-concrete text-safety flex items-center justify-center">
                 <Info className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-semibold text-sm text-gray-900">
+                <h4 className="font-display text-sm text-ink dark:text-ink">
                   {language === 'fa' ? 'راهنمای پرداخت' : 'Payment guide'}
                 </h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink/70 dark:text-ink/80 font-body">
                   {language === 'fa'
                     ? 'پرداخت‌ها به صورت ماهانه و پس از تأیید شیفت‌ها انجام می‌شود.'
                     : 'Payouts are processed monthly after all shifts are verified.'}
                 </p>
               </div>
             </div>
-            <ul className="space-y-3 text-xs leading-5 text-gray-600">
+            <ul className="space-y-3 text-xs leading-5 text-ink/80 dark:text-ink/90 font-body">
               <li>
                 {language === 'fa'
                   ? 'درآمدهای تایید شده تا تاریخ ۲۹ هر ماه، در تاریخ ۳۰ همان ماه به حساب شما واریز می‌شود.'
@@ -641,7 +666,7 @@ export default function WorkerFinancesPage() {
             </ul>
             <Link
               href="/profile/edit#personal-info"
-              className="inline-flex items-center justify-center rounded-[12px] bg-[#1a25a2] px-4 py-2 text-sm font-medium text-white hover:bg-[#161c85] transition"
+              className="inline-flex items-center justify-center rounded-xl bg-ink text-concrete border-2 border-ink px-4 py-2 text-sm font-bold hover:bg-safety hover:text-ink hover:shadow-[2px_2px_0px_0px_#1a1a1a] transition-all"
             >
               {language === 'fa' ? 'ویرایش اطلاعات بانکی' : 'Update bank information'}
             </Link>
@@ -663,26 +688,31 @@ type MetricCardProps = {
 };
 
 function MetricCard({ icon, title, helper, value, accent, chipLabel, chipTone }: MetricCardProps) {
+  // Map accent to dark mode equivalent - only for concrete-dark cards
+  const darkAccent = accent === 'from-concrete-dark to-concrete' 
+    ? 'dark:from-concrete-light dark:to-concrete-light' 
+    : '';
+  
   return (
-    <div className={`relative overflow-hidden rounded-[18px] border border-white/20 bg-gradient-to-br ${accent} p-6`}>
-      <div className="absolute inset-0 bg-white/5" />
+    <div className={`relative overflow-hidden rounded-[2rem] border-2 border-concrete bg-gradient-to-br ${accent} ${darkAccent} p-6 shadow-[4px_4px_0px_0px_#1a1a1a] dark:shadow-[4px_4px_0px_0px_#e0ded9]`}>
+      <div className="absolute inset-0 bg-concrete/5 dark:bg-ink/10" />
       <div className="relative space-y-4">
-        <div className="inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white">
+        <div className="inline-flex items-center justify-center rounded-full bg-concrete/20 border-2 border-concrete p-3 text-concrete dark:bg-concrete-light/30 dark:border-concrete dark:text-ink">
           {icon}
         </div>
         <div>
-          <p className="text-sm text-white/70">{title}</p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
+          <p className="text-sm text-concrete-dark font-body dark:text-ink/80">{title}</p>
+          <p className="text-3xl font-display mt-1 text-concrete dark:text-ink">{value}</p>
         </div>
-        <p className="text-xs text-white/70">
+        <p className="text-xs text-concrete-dark font-body dark:text-ink/80">
           {helper}
         </p>
         {chipLabel && (
           <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold border-2 ${
               chipTone === 'positive'
-                ? 'bg-[#00d4aa]/20 text-white'
-                : 'bg-red-500/20 text-white'
+                ? 'bg-moss/20 text-concrete border-moss dark:bg-moss/30 dark:text-ink dark:border-moss'
+                : 'bg-safety/20 text-concrete border-safety dark:bg-safety/30 dark:text-ink dark:border-safety'
             }`}
           >
             {chipLabel}
@@ -701,10 +731,10 @@ type SummaryItemProps = {
 
 function SummaryItem({ label, value, helper }: SummaryItemProps) {
   return (
-    <div className="rounded-[16px] border border-gray-100 bg-gray-50/60 p-4">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className="text-lg font-semibold text-[#1a25a2]">{value}</p>
-      <p className="text-xs text-gray-400 mt-1">{helper}</p>
+    <div className="rounded-xl border-2 border-ink dark:border-concrete bg-concrete-dark dark:bg-concrete-light p-4">
+      <p className="text-xs text-ink/70 dark:text-ink/80 font-body mb-1">{label}</p>
+      <p className="text-lg font-display text-moss dark:text-safety">{value}</p>
+      <p className="text-xs text-ink/60 dark:text-ink/70 font-body mt-1">{helper}</p>
     </div>
   );
 }

@@ -33,6 +33,8 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        // Dispatch custom event to notify Navbar
+        window.dispatchEvent(new Event('user-logout'));
         window.location.href = '/login';
       }
     }
